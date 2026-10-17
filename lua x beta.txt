@@ -1,0 +1,2092 @@
+local function LuaXBetaLoadingScreen()
+    local TweenService = game:GetService("TweenService")
+    local RunService = game:GetService("RunService")
+    local Players = game:GetService("Players")
+    local LP = Players.LocalPlayer
+
+    local sg = Instance.new("ScreenGui")
+    sg.Name = "LuaXBetaLoadingScreen"
+    sg.ResetOnSpawn = false
+    sg.DisplayOrder = 999999
+    sg.IgnoreGuiInset = true
+    sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    pcall(function() sg.Parent = game:GetService("CoreGui") end)
+    if not sg.Parent then sg.Parent = LP:WaitForChild("PlayerGui") end
+
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, 0, 1, 0)
+    bg.BackgroundColor3 = Color3.fromRGB(8, 4, 14)
+    bg.BorderSizePixel = 0
+    bg.ZIndex = 1
+    bg.Parent = sg
+
+    local scanHolder = Instance.new("Frame")
+    scanHolder.Size = UDim2.new(1, 0, 1, 0)
+    scanHolder.BackgroundTransparency = 1
+    scanHolder.ClipsDescendants = true
+    scanHolder.ZIndex = 3
+    scanHolder.Parent = sg
+
+    local scanLines = {}
+    for i = 1, 24 do
+        local line = Instance.new("Frame")
+        line.Size = UDim2.new(1, 0, 0, 1)
+        line.Position = UDim2.new(0, 0, i / 24, 0)
+        line.BackgroundColor3 = Color3.fromRGB(160, 80, 255)
+        line.BackgroundTransparency = 0.93
+        line.BorderSizePixel = 0
+        line.ZIndex = 3
+        line.Parent = scanHolder
+        table.insert(scanLines, line)
+    end
+
+    local sweep = Instance.new("Frame")
+    sweep.Size = UDim2.new(1, 0, 0, 60)
+    sweep.Position = UDim2.new(0, 0, -0.2, 0)
+    sweep.BackgroundColor3 = Color3.fromRGB(160, 80, 255)
+    sweep.BackgroundTransparency = 0.94
+    sweep.BorderSizePixel = 0
+    sweep.ZIndex = 4
+    sweep.Parent = sg
+
+    local ringHolder = Instance.new("Frame")
+    ringHolder.Size = UDim2.new(0, 320, 0, 320)
+    ringHolder.Position = UDim2.new(0.5, -160, 0.5, -190)
+    ringHolder.BackgroundTransparency = 1
+    ringHolder.ZIndex = 10
+    ringHolder.Parent = sg
+
+    local outerRing = Instance.new("Frame")
+    outerRing.Size = UDim2.new(1, 0, 1, 0)
+    outerRing.BackgroundTransparency = 1
+    outerRing.ZIndex = 10
+    outerRing.Parent = ringHolder
+    local orc = Instance.new("UICorner"); orc.CornerRadius = UDim.new(1, 0); orc.Parent = outerRing
+    local ors = Instance.new("UIStroke")
+    ors.Color = Color3.fromRGB(160, 80, 255)
+    ors.Thickness = 2
+    ors.Transparency = 0.4
+    ors.Parent = outerRing
+
+    local progressRing = Instance.new("Frame")
+    progressRing.Size = UDim2.new(1, 0, 1, 0)
+    progressRing.BackgroundTransparency = 1
+    progressRing.ZIndex = 11
+    progressRing.Parent = ringHolder
+    local prc = Instance.new("UICorner"); prc.CornerRadius = UDim.new(1, 0); prc.Parent = progressRing
+    local prs = Instance.new("UIStroke")
+    prs.Color = Color3.fromRGB(80, 220, 255)
+    prs.Thickness = 4
+    prs.Transparency = 0
+    prs.Parent = progressRing
+    local prg = Instance.new("UIGradient")
+    prg.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(160, 80, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 220, 255)),
+    })
+    prg.Parent = prs
+
+    local innerRing = Instance.new("Frame")
+    innerRing.Size = UDim2.new(0, 220, 0, 220)
+    innerRing.Position = UDim2.new(0.5, -110, 0.5, -110)
+    innerRing.BackgroundTransparency = 1
+    innerRing.ZIndex = 11
+    innerRing.Parent = ringHolder
+    local irc = Instance.new("UICorner"); irc.CornerRadius = UDim.new(1, 0); irc.Parent = innerRing
+    local irs = Instance.new("UIStroke")
+    irs.Color = Color3.fromRGB(80, 220, 255)
+    irs.Thickness = 1
+    irs.Transparency = 0.6
+    irs.Parent = innerRing
+
+    local dotOrbit = Instance.new("Frame")
+    dotOrbit.Size = UDim2.new(0, 10, 0, 10)
+    dotOrbit.BackgroundColor3 = Color3.fromRGB(80, 220, 255)
+    dotOrbit.BorderSizePixel = 0
+    dotOrbit.ZIndex = 12
+    dotOrbit.Parent = ringHolder
+    local doc = Instance.new("UICorner"); doc.CornerRadius = UDim.new(1, 0); doc.Parent = dotOrbit
+
+    local centerLogo = Instance.new("TextLabel")
+    centerLogo.Size = UDim2.new(0, 200, 0, 60)
+    centerLogo.Position = UDim2.new(0.5, -100, 0.5, -30)
+    centerLogo.BackgroundTransparency = 1
+    centerLogo.Text = "BETA"
+    centerLogo.TextColor3 = Color3.fromRGB(245, 245, 250)
+    centerLogo.Font = Enum.Font.GothamBlack
+    centerLogo.TextSize = 42
+    centerLogo.ZIndex = 12
+    centerLogo.Parent = ringHolder
+    local clg = Instance.new("UIGradient")
+    clg.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(160, 80, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 220, 255)),
+    })
+    clg.Parent = centerLogo
+
+    local subLogo = Instance.new("TextLabel")
+    subLogo.Size = UDim2.new(0, 200, 0, 16)
+    subLogo.Position = UDim2.new(0.5, -100, 0.5, 34)
+    subLogo.BackgroundTransparency = 1
+    subLogo.Text = "L U A X"
+    subLogo.TextColor3 = Color3.fromRGB(180, 160, 220)
+    subLogo.Font = Enum.Font.GothamMedium
+    subLogo.TextSize = 12
+    subLogo.ZIndex = 12
+    subLogo.Parent = ringHolder
+
+    local statusLine = Instance.new("TextLabel")
+    statusLine.Size = UDim2.new(1, 0, 0, 20)
+    statusLine.Position = UDim2.new(0, 0, 0.5, 170)
+    statusLine.BackgroundTransparency = 1
+    statusLine.Text = "booting"
+    statusLine.TextColor3 = Color3.fromRGB(80, 220, 255)
+    statusLine.Font = Enum.Font.Code
+    statusLine.TextSize = 12
+    statusLine.ZIndex = 12
+    statusLine.Parent = sg
+
+    local pctLine = Instance.new("TextLabel")
+    pctLine.Size = UDim2.new(1, 0, 0, 20)
+    pctLine.Position = UDim2.new(0, 0, 0.5, 194)
+    pctLine.BackgroundTransparency = 1
+    pctLine.Text = "0%"
+    pctLine.TextColor3 = Color3.fromRGB(140, 120, 180)
+    pctLine.Font = Enum.Font.Code
+    pctLine.TextSize = 11
+    pctLine.ZIndex = 12
+    pctLine.Parent = sg
+
+    local statuses = {
+        { t = 0.0, txt = "initializing core" },
+        { t = 0.55, txt = "loading obsidian" },
+        { t = 1.1, txt = "scanning environment" },
+        { t = 1.65, txt = "priming void engines" },
+        { t = 2.2, txt = "arming defenses" },
+        { t = 2.75, txt = "ready" },
+    }
+
+    local startT = tick()
+    local totalTime = 3.2
+    local spinAngle = 0
+    local sweepT = 0
+    local dotAngle = 0
+
+    local conn = RunService.RenderStepped:Connect(function(dt)
+        local elapsed = tick() - startT
+        local p = math.clamp(elapsed / totalTime, 0, 1)
+        pctLine.Text = math.floor(p * 100) .. "%"
+        for i = #statuses, 1, -1 do
+            if elapsed >= statuses[i].t then statusLine.Text = statuses[i].txt; break end
+        end
+
+        spinAngle = (spinAngle + dt * 120) % 360
+        prg.Rotation = spinAngle
+        prs.Transparency = 0.15 + math.sin(elapsed * 6) * 0.1
+
+        sweepT = (sweepT + dt * 0.6) % 1.4
+        sweep.Position = UDim2.new(0, 0, sweepT - 0.2, 0)
+
+        dotAngle = dotAngle + dt * 4
+        local cx = 0.5 + math.cos(dotAngle) * 0.5
+        local cy = 0.5 + math.sin(dotAngle) * 0.5
+        dotOrbit.Position = UDim2.new(cx, -5, cy, -5)
+
+        for i, line in ipairs(scanLines) do
+            local dist = math.abs((i / 24) - sweepT)
+            line.BackgroundTransparency = math.clamp(0.98 - (0.15 / (dist + 0.05)), 0.7, 0.98)
+        end
+    end)
+
+    task.spawn(function()
+        task.wait(totalTime)
+        if conn then conn:Disconnect() end
+        local fi = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+        TweenService:Create(bg, fi, { BackgroundTransparency = 1 }):Play()
+        TweenService:Create(sweep, fi, { BackgroundTransparency = 1 }):Play()
+        TweenService:Create(ors, fi, { Transparency = 1 }):Play()
+        TweenService:Create(prs, fi, { Transparency = 1 }):Play()
+        TweenService:Create(irs, fi, { Transparency = 1 }):Play()
+        TweenService:Create(centerLogo, fi, { TextTransparency = 1 }):Play()
+        TweenService:Create(subLogo, fi, { TextTransparency = 1 }):Play()
+        TweenService:Create(statusLine, fi, { TextTransparency = 1 }):Play()
+        TweenService:Create(pctLine, fi, { TextTransparency = 1 }):Play()
+        TweenService:Create(dotOrbit, fi, { BackgroundTransparency = 1 }):Play()
+        for _, l in ipairs(scanLines) do
+            TweenService:Create(l, fi, { BackgroundTransparency = 1 }):Play()
+        end
+        task.wait(0.7)
+        pcall(function() sg:Destroy() end)
+    end)
+end
+
+LuaXBetaLoadingScreen()
+
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/main/Library.lua"))()
+local Toggles = Library.Toggles
+local Options = Library.Options
+
+local Window = Library:CreateWindow({
+    Title        = "Lua x Beta",
+    Footer       = "v3.0 · jahir · .gg/luax",
+    Center       = true,
+    AutoShow     = true,
+    Resizable    = true,
+    MobileButtonsSide = "Right"
+})
+
+local function Notify(text, duration)
+    Library:Notify({ Title = "Lua x Beta", Description = text, Time = duration or 3 })
+end
+
+local Players    = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS        = game:GetService("UserInputService")
+local Camera     = workspace.CurrentCamera
+local LP         = Players.LocalPlayer
+
+local char, root, hum
+local conns = {}
+
+local function killConn(key)
+    if conns[key] then conns[key]:Disconnect(); conns[key] = nil end
+end
+
+local cfg = {
+    voidEnabled = false,
+    voidMode = "TP Everywhere",
+    interval = 0.005,
+    maxAlt = 1e6,
+    minAlt = 1,
+    xRange = 10000,
+    zRange = 10000,
+    yMin = -1e6,
+    yMax = 1e6,
+    baseX = 0, baseY = 0, baseZ = 0,
+    speedJitter = 600,
+    spinJitter = 1200,
+    preserveY = false,
+    antiFling = false,
+    platformStand = true,
+    logPositions = false,
+    safeRadius = 0,
+    durationEnabled = false,
+    duration = 10,
+    randomDuration = false,
+    durationMin = 5,
+    durationMax = 30,
+    tpPlacement = "Everywhere",
+    tpRandDist = true,
+    tpDistMin = -9e14,
+    tpDistMax = 9e14,
+    tpCornerWeight = 0.55,
+    tpEdgeWeight = 0.35,
+    tpScreenJitter = 0.12,
+    tpVertSpike = true,
+    tpVertMin = 0.5,
+    tpVertMax = 3.0,
+    tpNegBias = true,
+    tpClampScreen = true,
+    tpViewportRay = true,
+    tpFullScreen = true,
+    tpIncludeCenter = true,
+    driftSpeed = 1e9,
+    driftChaos = 0.98,
+    circleRadius = 500,
+    circleSpeed = 2,
+    spiralRadiusMax = 50000,
+    spiralRate = 2000,
+    predictiveLead = 0.15,
+    movementEnabled = false,
+    movementMode = "Camera",
+    moveForward = 0,
+    moveRight = 0,
+    moveUp = 0,
+}
+
+local orbitCfg = {
+    enabled = false,
+    mode = "Circle",
+    axis = "XZ",
+    targetMode = "Closest",
+    speed = 90,
+    dist = 8,
+    height = 0,
+    lerp = 0.3,
+    reverse = false,
+    faceTarget = true,
+    predict = false,
+    predictStr = 0.2,
+    lockDist = 999999999,
+    yawOff = 0,
+    pitchOff = 0,
+    offX = 0,
+    offY = 0,
+    offZ = 0,
+    heightOsc = false,
+    heightOscAmp = 5,
+    heightOscSpeed = 2,
+    randRad = false,
+    randRadMin = 5,
+    randRadMax = 20,
+    distPulse = false,
+    distPulseAmp = 5,
+    distPulseSpeed = 1,
+    speedRandom = false,
+    speedRandMin = 20,
+    speedRandMax = 200,
+    snapBack = false,
+    snapInterval = 0.5,
+    movementEnabled = false,
+    moveMode = "World",
+    moveForward = 0,
+    moveRight = 0,
+    moveUp = 0,
+}
+
+local predCfg = {
+    enabled = false,
+    dangerRadius = 120,
+    dodgeDist = 80,
+    cooldown = 0.03,
+    speedThreshold = 300,
+    reactTime = 0.06,
+    shootDot = 0.80,
+    predictAim = true,
+    predictAimLead = 0.25,
+    raycast = true,
+    animDetect = true,
+    multiPoint = true,
+    backstep = true,
+    reactionLadder = true,
+    infiniteRange = false,
+    notify = false,
+    notifyAnywhere = false,
+    verticalSpike = true,
+}
+
+local aaCfg = {
+    enabled = false,
+    mode = "RandomSpin",
+    speed = 5000,
+    randomSpeed = true,
+    pitchAngle = 45,
+    yawAngle = 45,
+    staticYaw = 90,
+    staticPitch = 0,
+    customYaw = 180,
+    customPitch = 0,
+    fakeAngle = false,
+    fakeYaw = 45,
+    fakePitch = 0,
+    microJitter = false,
+    microJitterAmp = 5,
+    microJitterSpeed = 30,
+    desyncMode = false,
+    desyncOffset = 180,
+    rollEnabled = false,
+    rollSpeed = 360,
+    breathe = false,
+    breatheAmp = 3,
+    breatheSpeed = 1,
+    randomFlip = false,
+    flipChance = 0.05,
+    moveEnabled = false,
+    moveMode = "World",
+    moveForward = 0,
+    moveRight = 0,
+    moveUp = 0,
+    spinOrbit = false,
+    spinOrbitRadius = 3,
+    spinOrbitSpeed = 5,
+    upDown = false,
+    upDownAmp = 2,
+    upDownSpeed = 3,
+}
+
+local abCfg = {
+    enabled = false,
+    velEnabled = true,
+    velThreshold = 200,
+    dodgeDist = 60,
+    cooldown = 0.05,
+    dodgeMode = "Perpendicular",
+    flickerEnabled = true,
+    flickerWindow = 0.5,
+    flickerMinTps = 3,
+    flickerTpDist = 12,
+    lookAtEnabled = true,
+    lookDotThresh = 0.85,
+    aimPredict = true,
+    aimPredictLead = 0.25,
+    gunDetect = true,
+    gunDot = 0.80,
+    notify = true,
+    notifyLabel = true,
+    safeRadius = 0,
+    reactionLadder = true,
+    verticalSpike = false,
+    infiniteRange = false,
+    threatScore = true,
+    motionlessMode = false,
+}
+
+local fakeCfg = {
+    enabled = false,
+    radius = 500,
+    height = 200,
+    yDist = 300,
+    speed = 30,
+    pattern = "Scatter",
+    distribution = "Random",
+    axisLock = "None",
+    randomizeEveryFrame = false,
+    scatterAngle = 360,
+    pulseRadius = false,
+    pulseRadiusMin = 100,
+    pulseRadiusMax = 1500,
+    pulseSpeed = 2,
+    layeredFake = false,
+    layerCount = 3,
+    chaosMode = false,
+    chaosMult = 5,
+    notify = false,
+}
+
+local state = {
+    driftDir = Vector3.new(1, 0, 0),
+    driftPos = Vector3.new(0, 0, 0),
+    elapsed = 0,
+    lastAcc = 0,
+    circleAng = 0,
+    spiralR = 0,
+    startTime = 0,
+}
+
+local aaState = {
+    angleAcc = 0,
+    jitterState = 0,
+    randTimer = 0,
+    randMul = 1,
+    microTimer = 0,
+    rollAcc = 0,
+    breathAcc = 0,
+    spinOrbitAng = 0,
+    upDownT = 0,
+}
+
+local predState = { lastDodgeTick = 0, lastShot = 0, rungIdx = 0, shootCD = {} }
+local abState = { lastDodge = 0, data = {} }
+local fakeState = { realCF = nil, lastPacket = 0, conn = nil, renderConn = nil, spiralAng = 0, pulseT = 0 }
+
+local function bindChar(c)
+    char = c
+    root = c:WaitForChild("HumanoidRootPart", 5)
+    hum = c:WaitForChild("Humanoid", 5)
+end
+
+if LP.Character then bindChar(LP.Character) end
+
+LP.CharacterAdded:Connect(function(c)
+    bindChar(c)
+    task.wait(0.3)
+    if cfg.voidEnabled then startVoidSpam() end
+    if orbitCfg.enabled then startOrbit() end
+    if predCfg.enabled then startPrediction() end
+    if aaCfg.enabled then startAntiAim() end
+    if abCfg.enabled then startAntiBait() end
+    if fakeCfg.enabled then startFakePos() end
+end)
+
+LP.CharacterRemoving:Connect(function()
+    killConn("void"); killConn("orbit"); killConn("pred"); killConn("antiAim"); killConn("antiBait")
+    if fakeState.conn then fakeState.conn:Disconnect(); fakeState.conn = nil end
+    if fakeState.renderConn then fakeState.renderConn:Disconnect(); fakeState.renderConn = nil end
+    root = nil; hum = nil; char = nil
+    fakeState.realCF = nil
+end)
+
+local function getClosest()
+    if not root then return nil end
+    local best, bestDist = nil, math.huge
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p == LP or not p.Character then continue end
+        local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+        local d = (root.Position - hrp.Position).Magnitude
+        if d < bestDist then bestDist = d; best = p end
+    end
+    return best
+end
+
+local function getTarget(mode)
+    if mode == "Closest" then return getClosest() end
+    local list = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(list, p)
+        end
+    end
+    if #list == 0 then return nil end
+    if mode == "Random" then return list[math.random(1, #list)]
+    elseif mode == "Weakest" then
+        table.sort(list, function(a, b)
+            local ha = a.Character:FindFirstChildOfClass("Humanoid")
+            local hb = b.Character:FindFirstChildOfClass("Humanoid")
+            return (ha and ha.Health or 0) < (hb and hb.Health or 0)
+        end)
+        return list[1]
+    elseif mode == "Strongest" then
+        table.sort(list, function(a, b)
+            local ha = a.Character:FindFirstChildOfClass("Humanoid")
+            local hb = b.Character:FindFirstChildOfClass("Humanoid")
+            return (ha and ha.Health or 0) > (hb and hb.Health or 0)
+        end)
+        return list[1]
+    end
+    return list[1]
+end
+
+local function predictPos(hrp, lead)
+    if not hrp then return Vector3.zero end
+    return hrp.Position + hrp.AssemblyLinearVelocity * lead
+end
+
+local function driftDir3D(t)
+    local nx, ny, nz = 0, 0, 0
+    local amp, freq = 1, 0.0001
+    for _ = 1, 4 do
+        nx = nx + math.noise(t * freq, 0, 0) * amp
+        ny = ny + math.noise(0, t * freq, 0) * amp
+        nz = nz + math.noise(0, 0, t * freq) * amp
+        freq = freq * 2.37; amp = amp * 0.5
+    end
+    local len = math.sqrt(nx * nx + ny * ny + nz * nz)
+    if len < 0.001 then return 1, 0, 0 end
+    return nx / len, ny / len, nz / len
+end
+
+local function safeFilter(pos)
+    if cfg.safeRadius > 0 then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p == LP or not p.Character then continue end
+            local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then continue end
+            local d = pos - hrp.Position
+            if d.Magnitude < cfg.safeRadius then
+                local dir = d.Magnitude > 0.01 and -d.Unit or Vector3.new(1, 0, 0)
+                pos = hrp.Position + dir * cfg.safeRadius
+            end
+        end
+    end
+    return pos
+end
+
+local function getScreenPoint()
+    if not Camera then
+        return Vector2.new(math.random(), math.random())
+    end
+    local vp = Camera.ViewportSize
+    local mode = cfg.tpPlacement
+    local x, y
+
+    if mode == "Corners" then
+        local corners = { Vector2.new(0, 0), Vector2.new(vp.X, 0), Vector2.new(0, vp.Y), Vector2.new(vp.X, vp.Y) }
+        local c = corners[math.random(1, 4)]
+        x = c.X; y = c.Y
+    elseif mode == "Edges" then
+        local edge = math.random(1, 4)
+        if edge == 1 then x = math.random() * vp.X; y = 0
+        elseif edge == 2 then x = math.random() * vp.X; y = vp.Y
+        elseif edge == 3 then x = 0; y = math.random() * vp.Y
+        else x = vp.X; y = math.random() * vp.Y end
+    elseif mode == "Quadrants" then
+        local q = math.random(1, 4)
+        local hw, hh = vp.X / 2, vp.Y / 2
+        if q == 1 then x = math.random() * hw; y = math.random() * hh
+        elseif q == 2 then x = hw + math.random() * hw; y = math.random() * hh
+        elseif q == 3 then x = math.random() * hw; y = hh + math.random() * hh
+        else x = hw + math.random() * hw; y = hh + math.random() * hh end
+    elseif mode == "Weighted" then
+        local roll = math.random()
+        if roll < cfg.tpCornerWeight then
+            local corners = { Vector2.new(0, 0), Vector2.new(vp.X, 0), Vector2.new(0, vp.Y), Vector2.new(vp.X, vp.Y) }
+            local c = corners[math.random(1, 4)]
+            x = c.X; y = c.Y
+        elseif roll < cfg.tpCornerWeight + cfg.tpEdgeWeight then
+            local edge = math.random(1, 4)
+            if edge == 1 then x = math.random() * vp.X; y = 0
+            elseif edge == 2 then x = math.random() * vp.X; y = vp.Y
+            elseif edge == 3 then x = 0; y = math.random() * vp.Y
+            else x = vp.X; y = math.random() * vp.Y end
+        else
+            x = math.random() * vp.X
+            y = math.random() * vp.Y
+        end
+    else
+        x = math.random() * vp.X
+        y = math.random() * vp.Y
+        if not cfg.tpFullScreen then
+            x = vp.X * 0.25 + math.random() * vp.X * 0.5
+            y = vp.Y * 0.25 + math.random() * vp.Y * 0.5
+        end
+    end
+
+    if cfg.tpScreenJitter > 0 then
+        x = x + (math.random() - 0.5) * vp.X * cfg.tpScreenJitter
+        y = y + (math.random() - 0.5) * vp.Y * cfg.tpScreenJitter
+    end
+    if cfg.tpClampScreen then
+        x = math.clamp(x, 0, vp.X)
+        y = math.clamp(y, 0, vp.Y)
+    end
+
+    return Vector2.new(x, y)
+end
+
+local function getTpEverywherePosition()
+    local dist
+    if cfg.tpRandDist then
+        dist = cfg.tpDistMin + math.random() * (cfg.tpDistMax - cfg.tpDistMin)
+    else
+        dist = cfg.tpDistMin
+    end
+    if cfg.tpNegBias and math.random() < 0.5 then dist = -math.abs(dist) end
+
+    if not Camera or not cfg.tpViewportRay then
+        local rx = (math.random() * 2 - 1) * cfg.xRange
+        local ry = cfg.yMin + math.random() * (cfg.yMax - cfg.yMin)
+        local rz = (math.random() * 2 - 1) * cfg.zRange
+        return Vector3.new(cfg.baseX + rx, ry, cfg.baseZ + rz)
+    end
+
+    local sp = getScreenPoint()
+    local ray = Camera:ViewportPointToRay(sp.X, sp.Y, math.abs(dist))
+    local base = ray.Origin
+
+    local vertMult = cfg.tpVertMin + math.random() * (cfg.tpVertMax - cfg.tpVertMin)
+    local vert = cfg.tpVertSpike and (math.random() * 2 - 1) * math.abs(dist) * vertMult or 0
+    if cfg.tpNegBias then vert = vert - math.abs(vert) * 0.3 end
+    if cfg.preserveY then vert = 0 end
+
+    local y = cfg.preserveY and (root and root.Position.Y or 0) or (base.Y + vert)
+    return Vector3.new(base.X, y, base.Z)
+end
+
+local function stepVoid()
+    local m = cfg.voidMode
+    if m == "TP Everywhere" then
+        return getTpEverywherePosition()
+    elseif m == "Chaos" then
+        return Vector3.new(
+            cfg.baseX + (math.random() * 2 - 1) * cfg.xRange,
+            cfg.yMin + math.random() * (cfg.yMax - cfg.yMin),
+            cfg.baseZ + (math.random() * 2 - 1) * cfg.zRange
+        )
+    elseif m == "Drift" then
+        local dx, dy, dz = driftDir3D(state.elapsed)
+        local target = Vector3.new(dx, dy, dz).Unit
+        state.driftDir = state.driftDir:Lerp(target, math.clamp(cfg.driftChaos * (1/60) * 10, 0, 1))
+        state.driftPos = (root and root.Position or Vector3.zero) + state.driftDir * cfg.driftSpeed * (1/60)
+        return state.driftPos
+    elseif m == "Circle" then
+        state.circleAng = state.circleAng + math.rad(cfg.circleSpeed) * (1/60)
+        return Vector3.new(
+            cfg.baseX + math.cos(state.circleAng) * cfg.circleRadius,
+            cfg.baseY + math.sin(state.circleAng * 1.3) * 50,
+            cfg.baseZ + math.sin(state.circleAng) * cfg.circleRadius
+        )
+    elseif m == "Spiral" then
+        state.spiralR = math.min(cfg.spiralRadiusMax, state.spiralR + cfg.spiralRate * (1/60))
+        state.circleAng = state.circleAng + math.rad(60) * (1/60)
+        return Vector3.new(
+            cfg.baseX + math.cos(state.circleAng) * state.spiralR,
+            cfg.baseY + math.sin(state.circleAng * 0.5) * state.spiralR * 0.3,
+            cfg.baseZ + math.sin(state.circleAng) * state.spiralR
+        )
+    elseif m == "OrbitTarget" then
+        local t = getClosest()
+        if t and t.Character then
+            local hrp = t.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local ang = state.elapsed * 6
+                return hrp.Position + Vector3.new(math.cos(ang) * 5, 2, math.sin(ang) * 5)
+            end
+        end
+        return getTpEverywherePosition()
+    elseif m == "Predictive" then
+        local t = getClosest()
+        if t and t.Character then
+            local hrp = t.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                return predictPos(hrp, cfg.predictiveLead) + Vector3.new(
+                    (math.random() - 0.5) * 100,
+                    (math.random() - 0.5) * 100,
+                    (math.random() - 0.5) * 100
+                )
+            end
+        end
+        return getTpEverywherePosition()
+    end
+    return root and root.Position or Vector3.zero
+end
+
+function startVoidSpam()
+    killConn("void")
+    if not root or not root.Parent then
+        task.wait(0.5)
+        if not root or not root.Parent then return end
+    end
+    pcall(function() root:SetNetworkOwner(LP) end)
+
+    if hum and cfg.platformStand then
+        pcall(function()
+            hum:ChangeState(Enum.HumanoidStateType.Physics)
+            hum.PlatformStand = true
+            hum.WalkSpeed = 0
+        end)
+    end
+
+    state.lastAcc = 0
+    state.elapsed = 0
+    state.circleAng = 0
+    state.spiralR = 0
+    state.startTime = tick()
+    state.driftPos = root.Position
+    state.driftDir = Vector3.new(math.random() * 2 - 1, 0, math.random() * 2 - 1).Unit
+
+    conns.void = RunService.Heartbeat:Connect(function(dt)
+        if not cfg.voidEnabled then killConn("void"); return end
+        if not root or not root.Parent then killConn("void"); return end
+        if hum and hum.Health <= 0 then return end
+
+        if cfg.durationEnabled then
+            local dur = cfg.duration
+            if cfg.randomDuration then
+                dur = cfg.durationMin + math.random() * (cfg.durationMax - cfg.durationMin)
+            end
+            if (tick() - state.startTime) > dur then
+                cfg.voidEnabled = false
+                Notify("void duration reached", 2)
+                return
+            end
+        end
+
+        state.elapsed = state.elapsed + dt
+        state.lastAcc = state.lastAcc + dt
+        if state.lastAcc < cfg.interval then return end
+        state.lastAcc = 0
+
+        local targetPos = stepVoid()
+        targetPos = safeFilter(targetPos)
+
+        if cfg.movementEnabled then
+            if cfg.movementMode == "Camera" and Camera then
+                targetPos = targetPos
+                    + Camera.CFrame.LookVector * cfg.moveForward
+                    + Camera.CFrame.RightVector * cfg.moveRight
+                    + Vector3.new(0, cfg.moveUp, 0)
+            else
+                targetPos = targetPos + Vector3.new(cfg.moveRight, cfg.moveUp, cfg.moveForward)
+            end
+        end
+
+        pcall(function()
+            root.AssemblyLinearVelocity = Vector3.zero
+            root.AssemblyAngularVelocity = Vector3.zero
+            root.CFrame = CFrame.new(targetPos)
+            root.AssemblyLinearVelocity = Vector3.new(
+                (math.random() - 0.5) * cfg.speedJitter * 2,
+                (math.random() - 0.5) * cfg.speedJitter * 2,
+                (math.random() - 0.5) * cfg.speedJitter * 2
+            )
+            root.AssemblyAngularVelocity = Vector3.new(
+                (math.random() - 0.5) * cfg.spinJitter * 2,
+                (math.random() - 0.5) * cfg.spinJitter * 2,
+                (math.random() - 0.5) * cfg.spinJitter * 2
+            )
+        end)
+
+        if hum and cfg.platformStand then
+            pcall(function()
+                hum.PlatformStand = true
+                hum:Move(Vector3.new(math.random() * 2 - 1, 0, math.random() * 2 - 1), true)
+            end)
+        end
+
+        if cfg.logPositions and math.random(1, 30) == 1 then
+            print("[LuaX Beta Void] " .. tostring(targetPos))
+        end
+    end)
+end
+
+function stopVoidSpam()
+    killConn("void")
+    cfg.voidEnabled = false
+    if root then
+        pcall(function()
+            root.AssemblyLinearVelocity = Vector3.zero
+            root.AssemblyAngularVelocity = Vector3.zero
+        end)
+    end
+    if hum then pcall(function() hum.PlatformStand = false end) end
+end
+
+function startOrbit()
+    killConn("orbit")
+    if hum then pcall(function() hum:ChangeState(Enum.HumanoidStateType.Physics) end) end
+
+    local angle = 0
+    local localElapsed = 0
+    local currentRadius = orbitCfg.dist
+    local snapTimer = 0
+    local pulseT = 0
+
+    conns.orbit = RunService.Heartbeat:Connect(function(dt)
+        if not orbitCfg.enabled then killConn("orbit"); return end
+        if not root or not root.Parent then return end
+
+        if hum then pcall(function()
+            if hum:GetState() ~= Enum.HumanoidStateType.Physics then
+                hum:ChangeState(Enum.HumanoidStateType.Physics)
+            end
+        end) end
+
+        local target = getTarget(orbitCfg.targetMode)
+        local targetPos = root.Position
+        if target and target.Character then
+            local hrp = target.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and (root.Position - hrp.Position).Magnitude <= orbitCfg.lockDist then
+                targetPos = hrp.Position
+                if orbitCfg.predict then
+                    targetPos = targetPos + hrp.AssemblyLinearVelocity * orbitCfg.predictStr
+                end
+            end
+        end
+
+        local speed = orbitCfg.reverse and -orbitCfg.speed or orbitCfg.speed
+        if orbitCfg.speedRandom then
+            speed = orbitCfg.speedRandMin + math.random() * (orbitCfg.speedRandMax - orbitCfg.speedRandMin)
+            if orbitCfg.reverse then speed = -speed end
+        end
+
+        angle = (angle + math.rad(speed) * dt) % (2 * math.pi)
+        localElapsed = localElapsed + dt
+        pulseT = pulseT + dt
+
+        local r = orbitCfg.randRad and math.random(orbitCfg.randRadMin, orbitCfg.randRadMax) or orbitCfg.dist
+        if orbitCfg.distPulse then
+            r = r + math.sin(pulseT * orbitCfg.distPulseSpeed * 2 * math.pi) * orbitCfg.distPulseAmp
+        end
+
+        local h = orbitCfg.height
+        if orbitCfg.heightOsc then
+            h = h + math.sin(localElapsed * orbitCfg.heightOscSpeed * 2 * math.pi) * orbitCfg.heightOscAmp
+        end
+
+        local x, y, z = 0, 0, 0
+        local om = orbitCfg.mode
+        local ax = orbitCfg.axis
+
+        if om == "Circle" then
+            if ax == "XZ" then x = math.cos(angle)*r; z = math.sin(angle)*r; y = h
+            elseif ax == "XY" then x = math.cos(angle)*r; y = math.sin(angle)*r; z = h
+            elseif ax == "YZ" then y = math.cos(angle)*r; z = math.sin(angle)*r; x = h end
+        elseif om == "Figure 8" then
+            x = math.sin(angle)*r; z = math.sin(angle)*math.cos(angle)*r*0.7; y = h
+        elseif om == "Spiral In" then
+            currentRadius = math.max(1, currentRadius - dt * orbitCfg.dist * 0.2)
+            x = math.cos(angle)*currentRadius; z = math.sin(angle)*currentRadius; y = h
+        elseif om == "Spiral Out" then
+            currentRadius = math.min(orbitCfg.dist*2, currentRadius + dt * orbitCfg.dist * 0.2)
+            x = math.cos(angle)*currentRadius; z = math.sin(angle)*currentRadius; y = h
+        elseif om == "Lemniscate" then
+            local denom = 1 + math.sin(angle)^2
+            x = r*math.cos(angle)/denom
+            z = r*math.sin(angle)*math.cos(angle)/denom
+            y = h
+        end
+
+        if orbitCfg.movementEnabled then
+            if orbitCfg.moveMode == "Camera" and Camera then
+                x = x + Camera.CFrame.RightVector.X * orbitCfg.moveRight + Camera.CFrame.LookVector.X * orbitCfg.moveForward
+                y = y + orbitCfg.moveUp
+                z = z + Camera.CFrame.RightVector.Z * orbitCfg.moveRight + Camera.CFrame.LookVector.Z * orbitCfg.moveForward
+            else
+                x = x + orbitCfg.moveRight
+                y = y + orbitCfg.moveUp
+                z = z + orbitCfg.moveForward
+            end
+        end
+
+        x = x + orbitCfg.offX
+        y = y + orbitCfg.offY
+        z = z + orbitCfg.offZ
+        local dst = targetPos + Vector3.new(x, y, z)
+
+        if orbitCfg.snapBack then
+            snapTimer = snapTimer + dt
+            if snapTimer >= orbitCfg.snapInterval then
+                snapTimer = 0
+                dst = targetPos + Vector3.new(orbitCfg.offX, h + orbitCfg.offY, orbitCfg.offZ)
+            end
+        end
+
+        local alpha = math.min(1, 1 - (1 - orbitCfg.lerp)^(dt * 60))
+        local smooth = root.Position:Lerp(dst, alpha)
+
+        pcall(function()
+            if orbitCfg.faceTarget then
+                local cf = CFrame.new(smooth, Vector3.new(targetPos.X, smooth.Y, targetPos.Z))
+                cf = cf * CFrame.Angles(math.rad(orbitCfg.pitchOff), math.rad(orbitCfg.yawOff), 0)
+                root.CFrame = cf
+            else
+                root.CFrame = CFrame.new(smooth)
+            end
+            root.AssemblyLinearVelocity = Vector3.zero
+            root.AssemblyAngularVelocity = Vector3.zero
+        end)
+    end)
+end
+
+function stopOrbit()
+    killConn("orbit")
+    orbitCfg.enabled = false
+    if hum then pcall(function() hum:ChangeState(Enum.HumanoidStateType.GettingUp) end) end
+end
+
+local function buildThreatMap(myPos)
+    local map = {}
+    if not myPos then return map end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p == LP or not p.Character then continue end
+        local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+        local head = p.Character:FindFirstChild("Head") or hrp
+        local look = head.CFrame.LookVector
+        local eye = head.Position
+        local toMe = myPos - eye
+        local dist = toMe.Magnitude
+        if dist < 0.01 then continue end
+        local aimDot = look:Dot(toMe.Unit)
+        local vel = hrp.AssemblyLinearVelocity
+        local velDot = vel.Magnitude > 1 and vel.Unit:Dot(toMe.Unit) or 0
+        local score = math.max(0, aimDot) * 45 + math.max(0, velDot) * 20
+        if p.Character:FindFirstChildOfClass("Tool") then score = score + 25 end
+        score = score + (predCfg.infiniteRange and 30 or math.max(0, 1 - dist / 250) * 30)
+        map[p] = { hrp = hrp, dist = dist, aimDot = aimDot, velDot = velDot, score = score }
+    end
+    return map
+end
+
+local function perpDodgeDir(fromPos, myPos)
+    local flat = Vector3.new(fromPos.X - myPos.X, 0, fromPos.Z - myPos.Z)
+    if flat.Magnitude < 0.01 then flat = Vector3.new(1, 0, 0) end
+    flat = flat.Unit
+    local p1 = Vector3.new(-flat.Z, 0, flat.X)
+    local p2 = Vector3.new(flat.Z, 0, -flat.X)
+    return math.random(0, 1) == 0 and p1 or p2
+end
+
+local function raycastLineOfFire(enemyHrp, myPos)
+    if not enemyHrp then return false, 0 end
+    local origin = enemyHrp.Position + Vector3.new(0, 1.5, 0)
+    local target = myPos + Vector3.new(0, 1.5, 0)
+    local dir = target - origin
+    local dist = dir.Magnitude
+    if dist < 0.01 then return false, 0 end
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = { LP.Character, enemyHrp.Parent }
+    local result = workspace:Raycast(origin, dir.Unit * dist, params)
+    return result == nil, dist
+end
+
+local function getAimOrigin(plr)
+    if not plr or not plr.Character then return nil end
+    return plr.Character:FindFirstChild("Head")
+        or plr.Character:FindFirstChild("CameraBone", true)
+        or plr.Character:FindFirstChild("HumanoidRootPart")
+end
+
+local function predictEnemyAim(plr, lead, myHrp)
+    if not plr or not plr.Character or not myHrp then return nil end
+    local origin = getAimOrigin(plr)
+    if not origin then return nil end
+    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+    local eVel = hrp.AssemblyLinearVelocity
+    local mVel = myHrp.AssemblyLinearVelocity
+    local ePos = origin.Position + eVel * lead
+    local mPos = myHrp.Position + mVel * lead
+    local dir = mPos - ePos
+    if dir.Magnitude < 0.01 then return nil end
+    local futureDot = origin.CFrame.LookVector:Dot(dir.Unit)
+    return { futureDot = futureDot, dist = dir.Magnitude }
+end
+
+local function animationThreat(plr)
+    if not predCfg.animDetect then return false end
+    local c = plr.Character
+    if not c then return false end
+    local h = c:FindFirstChildOfClass("Humanoid")
+    if not h then return false end
+    local animator = h:FindFirstChildOfClass("Animator")
+    if not animator then return false end
+    for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+        local name = (track.Animation and track.Animation.Name or ""):lower()
+        if name:find("shoot") or name:find("fire") or name:find("attack")
+            or name:find("swing") or name:find("slash") or name:find("punch")
+            or name:find("cast") or name:find("thrust") then
+            return true
+        end
+    end
+    return false
+end
+
+function startPrediction()
+    killConn("pred")
+    conns.pred = RunService.Heartbeat:Connect(function(dt)
+        if not predCfg.enabled then killConn("pred"); return end
+        if not root or not root.Parent then return end
+        if hum and hum.Health <= 0 then return end
+
+        local myPos = root.Position
+        local now = tick()
+        local map = buildThreatMap(myPos)
+        local primary, topScore = nil, 0
+        for p, d in pairs(map) do
+            if d.score > topScore then topScore = d.score; primary = { p = p, d = d } end
+        end
+        if not primary then return end
+
+        local effectiveRadius = predCfg.infiniteRange and 5e12 or predCfg.dangerRadius
+        if primary.d.dist > effectiveRadius then return end
+
+        local cooldown = predCfg.cooldown
+        if predCfg.reactionLadder then
+            if now - predState.lastShot < 1.5 then
+                predState.rungIdx = math.min(predState.rungIdx + 1, 5)
+            else
+                predState.rungIdx = 0
+            end
+            cooldown = cooldown / (1 + predState.rungIdx * 0.5)
+        end
+        if now - predState.lastDodgeTick < cooldown then return end
+
+        local threat = false
+        local fired = predState.shootCD[primary.p] and (now - predState.shootCD[primary.p]) < predCfg.reactTime
+        if fired then threat = true end
+        if primary.d.aimDot > predCfg.shootDot then threat = true end
+        if primary.d.velDot > 0.7 and primary.d.hrp.AssemblyLinearVelocity.Magnitude > predCfg.speedThreshold then threat = true end
+
+        if predCfg.raycast then
+            local clear = raycastLineOfFire(primary.d.hrp, myPos)
+            if clear and primary.d.aimDot > 0.6 then threat = true end
+        end
+
+        if predCfg.predictAim and not threat then
+            local prediction = predictEnemyAim(primary.p, predCfg.predictAimLead, root)
+            if prediction and prediction.futureDot > 0.85 and prediction.dist < effectiveRadius then
+                threat = true
+            end
+        end
+
+        if predCfg.animDetect and not threat then
+            if animationThreat(primary.p) then threat = true end
+        end
+
+        if not threat then return end
+
+        predState.lastDodgeTick = now
+        predState.lastShot = now
+        local dir = perpDodgeDir(primary.d.hrp.Position, myPos)
+        local newPos = myPos + dir * predCfg.dodgeDist
+
+        if predCfg.multiPoint then
+            local alt = Vector3.new(-dir.Z, 0, dir.X)
+            if math.random() < 0.5 then alt = -alt end
+            newPos = myPos + dir * (predCfg.dodgeDist * 0.7) + alt * (predCfg.dodgeDist * 0.5)
+        end
+        if predCfg.backstep then
+            local toward = primary.d.hrp.Position - myPos
+            if toward.Magnitude > 0.01 then
+                newPos = newPos - toward.Unit * (predCfg.dodgeDist * 0.3)
+            end
+        end
+        if predCfg.verticalSpike then
+            newPos = newPos + Vector3.new(0, math.random() * 15, 0)
+        end
+
+        for i = 1, 3 do
+            pcall(function()
+                root.CFrame = CFrame.new(newPos + Vector3.new((math.random() - 0.5) * 4, 0, (math.random() - 0.5) * 4))
+                root.AssemblyLinearVelocity = dir * 150
+            end)
+            RunService.Heartbeat:Wait()
+        end
+
+        if predCfg.notifyAnywhere or primary.d.dist < 500 then
+            if predCfg.notify then
+                Notify("pred: " .. primary.p.Name .. " [" .. math.floor(primary.d.dist) .. "]", 1.5)
+            end
+        end
+    end)
+end
+
+function stopPrediction()
+    killConn("pred")
+    predCfg.enabled = false
+end
+
+function startAntiAim()
+    killConn("antiAim")
+    conns.antiAim = RunService.Heartbeat:Connect(function(dt)
+        if not aaCfg.enabled then killConn("antiAim"); return end
+        if not root then return end
+
+        aaState.microTimer = aaState.microTimer + dt
+        aaState.breathAcc = aaState.breathAcc + dt
+        aaState.rollAcc = aaState.rollAcc + dt
+        aaState.upDownT = aaState.upDownT + dt
+
+        local spd = aaCfg.speed
+        if aaCfg.randomSpeed then
+            aaState.randTimer = aaState.randTimer + dt
+            if aaState.randTimer > 0.1 then
+                aaState.randTimer = 0
+                aaState.randMul = 0.2 + math.random() * 0.8
+            end
+            spd = spd * aaState.randMul
+        end
+
+        local extraYaw = 0
+        local extraPitch = 0
+        if aaCfg.fakeAngle then
+            extraYaw = extraYaw + aaCfg.fakeYaw
+            extraPitch = extraPitch + aaCfg.fakePitch
+        end
+        if aaCfg.breathe then
+            extraPitch = extraPitch + math.sin(aaState.breathAcc * aaCfg.breatheSpeed * 2 * math.pi) * aaCfg.breatheAmp
+        end
+        if aaCfg.microJitter and aaState.microTimer >= (1 / math.max(aaCfg.microJitterSpeed, 1)) then
+            aaState.microTimer = 0
+            extraYaw = extraYaw + (math.random() - 0.5) * aaCfg.microJitterAmp * 2
+            extraPitch = extraPitch + (math.random() - 0.5) * aaCfg.microJitterAmp
+        end
+        if aaCfg.desyncMode then extraYaw = extraYaw + aaCfg.desyncOffset end
+        if aaCfg.randomFlip and math.random() < aaCfg.flipChance then extraYaw = extraYaw + 180 end
+
+        local rollAngle = 0
+        if aaCfg.rollEnabled then
+            rollAngle = (aaState.rollAcc * aaCfg.rollSpeed * math.pi / 180) % (2 * math.pi)
+        end
+
+        local basePos = root.Position
+        if aaCfg.moveEnabled then
+            if aaCfg.moveMode == "Camera" and Camera then
+                basePos = basePos
+                    + Camera.CFrame.LookVector * aaCfg.moveForward
+                    + Camera.CFrame.RightVector * aaCfg.moveRight
+                    + Vector3.new(0, aaCfg.moveUp, 0)
+            else
+                basePos = basePos + Vector3.new(aaCfg.moveRight, aaCfg.moveUp, aaCfg.moveForward)
+            end
+        end
+        if aaCfg.spinOrbit then
+            aaState.spinOrbitAng = aaState.spinOrbitAng + aaCfg.spinOrbitSpeed * dt
+            basePos = basePos + Vector3.new(
+                math.cos(aaState.spinOrbitAng) * aaCfg.spinOrbitRadius,
+                0,
+                math.sin(aaState.spinOrbitAng) * aaCfg.spinOrbitRadius
+            )
+        end
+        if aaCfg.upDown then
+            basePos = basePos + Vector3.new(0, math.sin(aaState.upDownT * aaCfg.upDownSpeed) * aaCfg.upDownAmp, 0)
+        end
+
+        local m = aaCfg.mode
+        if m == "Spin" then
+            aaState.angleAcc = aaState.angleAcc + spd * dt
+            root.CFrame = CFrame.new(basePos) * CFrame.Angles(math.rad(extraPitch), math.rad(aaState.angleAcc + extraYaw), rollAngle)
+        elseif m == "Jitter" then
+            local p = aaCfg.pitchAngle
+            local y = aaCfg.yawAngle
+            root.CFrame = CFrame.new(basePos) * CFrame.Angles(
+                math.rad((aaState.jitterState == 0 and p or -p) + extraPitch),
+                math.rad((aaState.jitterState == 0 and y or -y) + extraYaw),
+                rollAngle
+            )
+            aaState.jitterState = (aaState.jitterState + 1) % 2
+        elseif m == "Static" then
+            root.CFrame = CFrame.new(basePos) * CFrame.Angles(math.rad(aaCfg.staticPitch + extraPitch), math.rad(aaCfg.staticYaw + extraYaw), rollAngle)
+        elseif m == "RandomSpin" then
+            aaState.angleAcc = aaState.angleAcc + spd * dt * (math.random() * 2 - 1)
+            root.CFrame = CFrame.new(basePos) * CFrame.Angles(math.rad(aaCfg.customPitch + extraPitch), math.rad(aaState.angleAcc + extraYaw), rollAngle)
+        elseif m == "Custom" then
+            root.CFrame = CFrame.new(basePos) * CFrame.Angles(math.rad(aaCfg.customPitch + extraPitch), math.rad(aaCfg.customYaw + extraYaw), rollAngle)
+        elseif m == "Up" then
+            root.CFrame = CFrame.new(basePos) * CFrame.Angles(math.rad(90 + extraPitch), math.rad(extraYaw), rollAngle)
+        elseif m == "Down" then
+            root.CFrame = CFrame.new(basePos) * CFrame.Angles(math.rad(-90 + extraPitch), math.rad(extraYaw), rollAngle)
+        elseif m == "Side" then
+            root.CFrame = CFrame.new(basePos) * CFrame.Angles(math.rad(extraPitch), math.rad(extraYaw), math.rad(90) + rollAngle)
+        end
+    end)
+end
+
+function stopAntiAim()
+    killConn("antiAim")
+    aaCfg.enabled = false
+end
+
+local function abInit(p)
+    abState.data[p] = { lastPos = nil, tpTimes = {}, lastShot = 0 }
+end
+
+local function abClean(data)
+    local now, clean = tick(), {}
+    for _, t in ipairs(data.tpTimes) do
+        if now - t < abCfg.flickerWindow then clean[#clean + 1] = t end
+    end
+    data.tpTimes = clean
+end
+
+local function abGetDodgeDir(threatPos)
+    if not root then return Vector3.new(1, 0, 0) end
+    local flat = Vector3.new(threatPos.X - root.Position.X, 0, threatPos.Z - root.Position.Z)
+    local away = flat.Magnitude > 0.01 and -flat.Unit or Vector3.new(1, 0, 0)
+    local right = Vector3.new(-away.Z, 0, away.X)
+    local up = Vector3.new(0, 1, 0)
+    local m = abCfg.dodgeMode
+    if m == "Away" then return away
+    elseif m == "Toward" then return -away
+    elseif m == "Up" then return up
+    elseif m == "Down" then return -up
+    elseif m == "Diagonal" then
+        local side = math.random(0, 1) == 0 and right or -right
+        return (away + side).Unit
+    elseif m == "Spiral" then
+        local ang = tick() * 6
+        return right * math.cos(ang) + away * math.sin(ang)
+    elseif m == "Backstep" then return away + up * 0.4
+    elseif m == "SideStep" then
+        return math.random(0, 1) == 0 and right or -right
+    end
+    return math.random(0, 1) == 0 and right or -right
+end
+
+local function abDodge(p, reason, threatPos)
+    if not root then return end
+    local now = tick()
+    if now - abState.lastDodge < abCfg.cooldown then return end
+    abState.lastDodge = now
+
+    local dir = abGetDodgeDir(threatPos or root.Position)
+    local newPos = root.Position + dir * abCfg.dodgeDist
+    if abCfg.verticalSpike then
+        newPos = newPos + Vector3.new(0, math.random() * 20 + 5, 0)
+    end
+    pcall(function()
+        root.CFrame = CFrame.new(newPos)
+        root.AssemblyLinearVelocity = dir * 150
+    end)
+
+    if abCfg.notify then
+        local dist = 0
+        if p and p.Character then
+            local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then dist = math.floor((hrp.Position - root.Position).Magnitude) end
+        end
+        Notify("anti-bait: " .. (p and p.Name or "?") .. " [" .. reason .. "] " .. dist .. " studs", 1.5)
+    end
+end
+
+function startAntiBait()
+    killConn("antiBait")
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP then abInit(p) end
+    end
+    Players.PlayerAdded:Connect(function(p) if p ~= LP then abInit(p) end end)
+    Players.PlayerRemoving:Connect(function(p) abState.data[p] = nil end)
+
+    conns.antiBait = RunService.Heartbeat:Connect(function(dt)
+        if not abCfg.enabled then killConn("antiBait"); return end
+        if not root then return end
+        local myPos = root.Position
+        local now = tick()
+
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p == LP or not p.Character then continue end
+            local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then continue end
+            local data = abState.data[p]
+            if not data then abInit(p); data = abState.data[p] end
+
+            local curPos = hrp.Position
+            local vel = hrp.AssemblyLinearVelocity
+            local dist = (curPos - myPos).Magnitude
+            local effRadius = abCfg.infiniteRange and 5e12 or 500
+            if dist > effRadius then data.lastPos = curPos; continue end
+
+            if abCfg.velEnabled and vel.Magnitude > abCfg.velThreshold then
+                local toMe = myPos - curPos
+                if toMe.Magnitude > 0.01 and vel.Unit:Dot(toMe.Unit) > 0.6 then
+                    abDodge(p, "vel-spike", curPos)
+                end
+            end
+
+            if abCfg.gunDetect then
+                local tool = p.Character:FindFirstChildOfClass("Tool")
+                if tool then
+                    local origin = getAimOrigin(p)
+                    if origin then
+                        local look = origin.CFrame.LookVector
+                        local toMe = myPos - origin.Position
+                        if toMe.Magnitude > 0.01 and look:Dot(toMe.Unit) > abCfg.gunDot then
+                            abDodge(p, "gun", curPos)
+                        end
+                    end
+                end
+            end
+
+            if abCfg.lookAtEnabled then
+                local origin = getAimOrigin(p)
+                if origin then
+                    local look = origin.CFrame.LookVector
+                    local toMe = myPos - origin.Position
+                    if toMe.Magnitude > 0.01 and look:Dot(toMe.Unit) > abCfg.lookDotThresh then
+                        abDodge(p, "look", curPos)
+                    end
+                end
+            end
+
+            if abCfg.aimPredict then
+                local prediction = predictEnemyAim(p, abCfg.aimPredictLead, root)
+                if prediction and prediction.futureDot > 0.85 and prediction.dist < effRadius then
+                    abDodge(p, "predict", curPos)
+                end
+            end
+
+            if abCfg.flickerEnabled and data.lastPos then
+                if (curPos - data.lastPos).Magnitude > abCfg.flickerTpDist then
+                    data.tpTimes[#data.tpTimes + 1] = now
+                end
+                abClean(data)
+                if #data.tpTimes >= abCfg.flickerMinTps then
+                    data.tpTimes = {}
+                    abDodge(p, "flicker", curPos)
+                end
+            end
+
+            data.lastPos = curPos
+        end
+    end)
+end
+
+function stopAntiBait()
+    killConn("antiBait")
+    abCfg.enabled = false
+    abState.data = {}
+end
+
+function startFakePos()
+    if fakeState.conn then fakeState.conn:Disconnect() end
+    if fakeState.renderConn then fakeState.renderConn:Disconnect() end
+    fakeState.realCF = nil
+    fakeState.lastPacket = 0
+    fakeState.spiralAng = 0
+    fakeState.pulseT = 0
+
+    fakeState.conn = RunService.Heartbeat:Connect(function(dt)
+        if not fakeCfg.enabled or not root then return end
+        fakeState.realCF = root.CFrame
+        fakeState.pulseT = fakeState.pulseT + dt
+        local now = tick()
+        local spd = fakeCfg.randomizeEveryFrame and 9999 or math.max(fakeCfg.speed, 1)
+        if now - fakeState.lastPacket < (1 / spd) then return end
+        fakeState.lastPacket = now
+
+        local r = math.max(fakeCfg.radius, 1)
+        if fakeCfg.pulseRadius then
+            r = fakeCfg.pulseRadiusMin + (math.sin(fakeState.pulseT * fakeCfg.pulseSpeed * 2 * math.pi) * 0.5 + 0.5) * (fakeCfg.pulseRadiusMax - fakeCfg.pulseRadiusMin)
+        end
+
+        local layers = fakeCfg.layeredFake and fakeCfg.layerCount or 1
+
+        for layer = 1, layers do
+            local ox, oy, oz = 0, 0, 0
+            local lr = r * (layer / layers)
+            if fakeCfg.chaosMode then lr = lr * (1 + (math.random() - 0.5) * fakeCfg.chaosMult) end
+
+            if fakeCfg.pattern == "Scatter" then
+                local a = (math.random() - 0.5) * math.rad(fakeCfg.scatterAngle)
+                ox = math.cos(a) * (math.random() * lr)
+                oy = fakeCfg.height + math.random() * fakeCfg.yDist
+                oz = math.sin(a) * (math.random() * lr)
+            elseif fakeCfg.pattern == "Linear" then
+                ox = (math.random() - 0.5) * 2 * lr
+                oy = fakeCfg.height + math.random() * fakeCfg.yDist
+                oz = (math.random() - 0.5) * 2 * lr
+            elseif fakeCfg.pattern == "Circle" then
+                fakeState.spiralAng = (fakeState.spiralAng + math.rad(60)) % (2 * math.pi)
+                ox = math.cos(fakeState.spiralAng) * lr
+                oy = fakeCfg.height + math.random() * fakeCfg.yDist
+                oz = math.sin(fakeState.spiralAng) * lr
+            elseif fakeCfg.pattern == "Random" then
+                ox = (math.random() * 2 - 1) * lr
+                oy = fakeCfg.height + math.random() * fakeCfg.yDist
+                oz = (math.random() * 2 - 1) * lr
+            elseif fakeCfg.pattern == "Spiral" then
+                fakeState.spiralAng = (fakeState.spiralAng + math.rad(60)) % (2 * math.pi)
+                local sr = lr * (0.3 + 0.7 * ((fakeState.spiralAng / (2 * math.pi)) % 1))
+                ox = math.cos(fakeState.spiralAng) * sr
+                oy = fakeCfg.height + math.random() * fakeCfg.yDist
+                oz = math.sin(fakeState.spiralAng) * sr
+            end
+
+            if fakeCfg.distribution == "Uniform" then
+                local mag = math.sqrt(ox * ox + oz * oz)
+                if mag > 0 then local s = lr / mag; ox = ox * s; oz = oz * s end
+            elseif fakeCfg.distribution == "Weighted" then
+                ox = ox * 0.6; oz = oz * 0.6
+            elseif fakeCfg.distribution == "Radial" then
+                local theta = math.atan2(oz, ox)
+                ox = math.cos(theta) * lr
+                oz = math.sin(theta) * lr
+            elseif fakeCfg.distribution == "Clustered" then
+                local ca = math.floor(math.random() * 8) * (math.pi * 0.25)
+                ox = math.cos(ca) * lr
+                oz = math.sin(ca) * lr
+            end
+
+            if fakeCfg.axisLock == "X" then oz = 0; oy = fakeCfg.height
+            elseif fakeCfg.axisLock == "Y" then ox = 0; oz = 0
+            elseif fakeCfg.axisLock == "Z" then ox = 0; oy = fakeCfg.height
+            elseif fakeCfg.axisLock == "XZ" then oy = fakeCfg.height end
+
+            local fcf = fakeState.realCF + Vector3.new(ox, oy, oz)
+            pcall(function()
+                root.AssemblyLinearVelocity = Vector3.zero
+                root.CFrame = fcf
+                root.AssemblyLinearVelocity = Vector3.zero
+            end)
+        end
+    end)
+
+    fakeState.renderConn = RunService.RenderStepped:Connect(function()
+        if fakeCfg.enabled and root and fakeState.realCF then
+            root.CFrame = fakeState.realCF
+            root.AssemblyLinearVelocity = Vector3.zero
+            root.AssemblyAngularVelocity = Vector3.zero
+        end
+    end)
+end
+
+function stopFakePos()
+    if fakeState.conn then fakeState.conn:Disconnect(); fakeState.conn = nil end
+    if fakeState.renderConn then fakeState.renderConn:Disconnect(); fakeState.renderConn = nil end
+    fakeState.realCF = nil
+    fakeCfg.enabled = false
+end
+
+local Tabs = {
+    VoidSpam   = Window:AddTab("VoidSpam", "activity"),
+    Orbit      = Window:AddTab("Orbit", "refresh-cw"),
+    Prediction = Window:AddTab("Prediction", "crosshair"),
+    AntiAim    = Window:AddTab("AntiAim", "shield"),
+    AntiBait   = Window:AddTab("Anti Bait", "target"),
+    FakePos    = Window:AddTab("Fake Pos", "ghost"),
+    Settings   = Window:AddTab("Settings", "settings"),
+}
+
+local VL = Tabs.VoidSpam:AddLeftGroupbox("Void Spam")
+local VR = Tabs.VoidSpam:AddRightGroupbox("TP Everywhere")
+local VM = Tabs.VoidSpam:AddLeftGroupbox("Movement")
+
+local voidToggle = VL:AddToggle("VoidToggle", {
+    Text = "Enable VoidSpam",
+    Default = false,
+    Callback = function(val)
+        cfg.voidEnabled = val
+        if val then startVoidSpam() else stopVoidSpam() end
+    end
+})
+voidToggle:AddKeyPicker("VoidKey", {
+    Text = "Toggle Key",
+    Default = "None",
+    Mode = "Toggle",
+    NoUI = false,
+    SyncToggleState = true,
+    Modes = { "Toggle", "Hold" }
+})
+
+VL:AddDropdown("VoidMode", {
+    Text = "Mode",
+    Default = "TP Everywhere",
+    Values = { "TP Everywhere", "Chaos", "Drift", "Circle", "Spiral", "OrbitTarget", "Predictive" },
+    Callback = function(v) cfg.voidMode = v end
+})
+VL:AddSlider("Speed", { Text = "Speed (s)", Default = 0.005, Min = 0.001, Max = 1, Rounding = 3, Callback = function(v) cfg.interval = v end })
+VL:AddSlider("MaxAlt", { Text = "Max Altitude", Default = 1000000, Min = 100, Max = 1e9, Rounding = 0, Callback = function(v) cfg.maxAlt = v end })
+VL:AddSlider("MinAlt", { Text = "Min Altitude", Default = 1, Min = 1, Max = 1e6, Rounding = 0, Callback = function(v) cfg.minAlt = v end })
+VL:AddSlider("XRange", { Text = "X Range", Default = 10000, Min = 0, Max = 5e6, Rounding = 0, Callback = function(v) cfg.xRange = v end })
+VL:AddSlider("ZRange", { Text = "Z Range", Default = 10000, Min = 0, Max = 5e6, Rounding = 0, Callback = function(v) cfg.zRange = v end })
+VL:AddSlider("YMin", { Text = "Y Min", Default = -1e6, Min = -1e9, Max = 0, Rounding = 0, Callback = function(v) cfg.yMin = v end })
+VL:AddSlider("YMax", { Text = "Y Max", Default = 1e6, Min = 0, Max = 1e9, Rounding = 0, Callback = function(v) cfg.yMax = v end })
+VL:AddSlider("BaseX", { Text = "Base X", Default = 0, Min = -1e9, Max = 1e9, Rounding = 0, Callback = function(v) cfg.baseX = v end })
+VL:AddSlider("BaseY", { Text = "Base Y", Default = 0, Min = -1e9, Max = 1e9, Rounding = 0, Callback = function(v) cfg.baseY = v end })
+VL:AddSlider("BaseZ", { Text = "Base Z", Default = 0, Min = -1e9, Max = 1e9, Rounding = 0, Callback = function(v) cfg.baseZ = v end })
+VL:AddSlider("SpeedJitter", { Text = "Velocity Jitter", Default = 600, Min = 0, Max = 10000, Rounding = 0, Callback = function(v) cfg.speedJitter = v end })
+VL:AddSlider("SpinJitter", { Text = "Angular Jitter", Default = 1200, Min = 0, Max = 20000, Rounding = 0, Callback = function(v) cfg.spinJitter = v end })
+VL:AddSlider("SafeRadius", { Text = "Safe Radius (studs)", Default = 0, Min = 0, Max = 200, Rounding = 0, Callback = function(v) cfg.safeRadius = v end })
+VL:AddSlider("DriftSpeed", { Text = "Drift Speed", Default = 1e9, Min = 1, Max = 1e15, Rounding = 0, Callback = function(v) cfg.driftSpeed = v end })
+VL:AddSlider("DriftChaos", { Text = "Drift Chaos (%)", Default = 98, Min = 1, Max = 100, Rounding = 0, Callback = function(v) cfg.driftChaos = v * 0.01 end })
+VL:AddSlider("CircleRadius", { Text = "Circle/Spiral Radius", Default = 500, Min = 10, Max = 1e6, Rounding = 0, Callback = function(v) cfg.circleRadius = v end })
+VL:AddSlider("CircleSpeed", { Text = "Circle Speed", Default = 2, Min = 0.1, Max = 50, Rounding = 1, Callback = function(v) cfg.circleSpeed = v end })
+VL:AddSlider("SpiralRadiusMax", { Text = "Spiral Max Radius", Default = 50000, Min = 100, Max = 5e6, Rounding = 0, Callback = function(v) cfg.spiralRadiusMax = v end })
+VL:AddSlider("SpiralRate", { Text = "Spiral Rate", Default = 2000, Min = 10, Max = 100000, Rounding = 0, Callback = function(v) cfg.spiralRate = v end })
+VL:AddSlider("PredictiveLead", { Text = "Predictive Lead (x0.01s)", Default = 15, Min = 1, Max = 100, Rounding = 0, Callback = function(v) cfg.predictiveLead = v * 0.01 end })
+VL:AddToggle("PlatformStand", { Text = "Platform Stand (Physics)", Default = true, Callback = function(v) cfg.platformStand = v end })
+VL:AddToggle("PreserveY", { Text = "Preserve Y Position", Default = false, Callback = function(v) cfg.preserveY = v end })
+VL:AddToggle("AntiFling", { Text = "Anti-Fling", Default = false, Callback = function(v) cfg.antiFling = v end })
+VL:AddToggle("DurationEnabled", { Text = "Duration Limit", Default = false, Callback = function(v) cfg.durationEnabled = v end })
+VL:AddSlider("Duration", { Text = "Duration (s)", Default = 10, Min = 1, Max = 300, Rounding = 0, Callback = function(v) cfg.duration = v end })
+VL:AddToggle("RandomDuration", { Text = "Randomize Duration", Default = false, Callback = function(v) cfg.randomDuration = v end })
+VL:AddSlider("DurationMin", { Text = "Duration Min", Default = 5, Min = 1, Max = 300, Rounding = 0, Callback = function(v) cfg.durationMin = v end })
+VL:AddSlider("DurationMax", { Text = "Duration Max", Default = 30, Min = 1, Max = 300, Rounding = 0, Callback = function(v) cfg.durationMax = v end })
+VL:AddToggle("LogPositions", { Text = "Log Positions", Default = false, Callback = function(v) cfg.logPositions = v end })
+
+VR:AddDropdown("TpPlacement", {
+    Text = "Screen Placement",
+    Default = "Everywhere",
+    Values = { "Everywhere", "Corners", "Edges", "Quadrants", "Weighted" },
+    Callback = function(v) cfg.tpPlacement = v end
+})
+VR:AddToggle("TpRandDist", { Text = "Randomize Distance", Default = true, Callback = function(v) cfg.tpRandDist = v end })
+VR:AddSlider("TpDistMin", { Text = "TP Dist Min", Default = -9e14, Min = -1e15, Max = 0, Rounding = 0, Callback = function(v) cfg.tpDistMin = v end })
+VR:AddSlider("TpDistMax", { Text = "TP Dist Max", Default = 9e14, Min = 0, Max = 1e15, Rounding = 0, Callback = function(v) cfg.tpDistMax = v end })
+VR:AddSlider("TpCornerWeight", { Text = "Corner Weight (%)", Default = 55, Min = 0, Max = 100, Rounding = 0, Callback = function(v) cfg.tpCornerWeight = v * 0.01 end })
+VR:AddSlider("TpEdgeWeight", { Text = "Edge Weight (%)", Default = 35, Min = 0, Max = 100, Rounding = 0, Callback = function(v) cfg.tpEdgeWeight = v * 0.01 end })
+VR:AddSlider("TpScreenJitter", { Text = "Screen Jitter (%)", Default = 12, Min = 0, Max = 100, Rounding = 0, Callback = function(v) cfg.tpScreenJitter = v * 0.01 end })
+VR:AddSlider("TpVertMin", { Text = "Vert Spike Min Mult", Default = 0.5, Min = 0, Max = 10, Rounding = 1, Callback = function(v) cfg.tpVertMin = v end })
+VR:AddSlider("TpVertMax", { Text = "Vert Spike Max Mult", Default = 3.0, Min = 0, Max = 20, Rounding = 1, Callback = function(v) cfg.tpVertMax = v end })
+VR:AddToggle("TpVertSpike", { Text = "Vertical Spike", Default = true, Callback = function(v) cfg.tpVertSpike = v end })
+VR:AddToggle("TpNegBias", { Text = "Negative Bias", Default = true, Callback = function(v) cfg.tpNegBias = v end })
+VR:AddToggle("TpViewportRay", { Text = "Viewport Raycast", Default = true, Callback = function(v) cfg.tpViewportRay = v end })
+VR:AddToggle("TpClampScreen", { Text = "Clamp To Screen", Default = true, Callback = function(v) cfg.tpClampScreen = v end })
+VR:AddToggle("TpFullScreen", { Text = "Full Screen Coverage", Default = true, Callback = function(v) cfg.tpFullScreen = v end })
+VR:AddToggle("TpIncludeCenter", { Text = "Include Center", Default = true, Callback = function(v) cfg.tpIncludeCenter = v end })
+
+VM:AddToggle("MovementEnabled", { Text = "Enable Movement Offset", Default = false, Callback = function(v) cfg.movementEnabled = v end })
+VM:AddDropdown("MovementMode", { Text = "Movement Mode", Default = "Camera", Values = { "Camera", "World" }, Callback = function(v) cfg.movementMode = v end })
+VM:AddSlider("MoveForward", { Text = "Forward Offset", Default = 0, Min = -500, Max = 500, Rounding = 1, Callback = function(v) cfg.moveForward = v end })
+VM:AddSlider("MoveRight", { Text = "Right Offset", Default = 0, Min = -500, Max = 500, Rounding = 1, Callback = function(v) cfg.moveRight = v end })
+VM:AddSlider("MoveUp", { Text = "Up Offset", Default = 0, Min = -500, Max = 500, Rounding = 1, Callback = function(v) cfg.moveUp = v end })
+
+local OL = Tabs.Orbit:AddLeftGroupbox("Orbit")
+local OM = Tabs.Orbit:AddRightGroupbox("Movement")
+
+local orbitToggle = OL:AddToggle("OrbitToggle", {
+    Text = "Enable Orbit",
+    Default = false,
+    Callback = function(val)
+        orbitCfg.enabled = val
+        if val then startOrbit() else stopOrbit() end
+    end
+})
+orbitToggle:AddKeyPicker("OrbitKey", {
+    Text = "Toggle Key",
+    Default = "None",
+    Mode = "Toggle",
+    NoUI = false,
+    SyncToggleState = true,
+    Modes = { "Toggle", "Hold" }
+})
+
+OL:AddDropdown("OrbitMode", { Text = "Mode", Default = "Circle", Values = { "Circle", "Figure 8", "Spiral In", "Spiral Out", "Lemniscate" }, Callback = function(v) orbitCfg.mode = v end })
+OL:AddDropdown("OrbitAxis", { Text = "Axis", Default = "XZ", Values = { "XZ", "XY", "YZ" }, Callback = function(v) orbitCfg.axis = v end })
+OL:AddDropdown("OrbitTarget", { Text = "Target", Default = "Closest", Values = { "Closest", "Random", "Weakest", "Strongest" }, Callback = function(v) orbitCfg.targetMode = v end })
+OL:AddSlider("OrbitSpeed", { Text = "Speed (deg/s)", Default = 90, Min = 5, Max = 720, Rounding = 0, Callback = function(v) orbitCfg.speed = v end })
+OL:AddSlider("OrbitDist", { Text = "Radius", Default = 8, Min = 1, Max = 200, Rounding = 0, Callback = function(v) orbitCfg.dist = v end })
+OL:AddSlider("OrbitHeight", { Text = "Height Offset", Default = 0, Min = -200, Max = 200, Rounding = 0, Callback = function(v) orbitCfg.height = v end })
+OL:AddSlider("OrbitLerp", { Text = "Smoothing", Default = 30, Min = 1, Max = 100, Rounding = 0, Callback = function(v) orbitCfg.lerp = v / 100 end })
+OL:AddSlider("OrbitOffX", { Text = "X Offset", Default = 0, Min = -100, Max = 100, Rounding = 0, Callback = function(v) orbitCfg.offX = v end })
+OL:AddSlider("OrbitOffY", { Text = "Y Offset", Default = 0, Min = -100, Max = 100, Rounding = 0, Callback = function(v) orbitCfg.offY = v end })
+OL:AddSlider("OrbitOffZ", { Text = "Z Offset", Default = 0, Min = -100, Max = 100, Rounding = 0, Callback = function(v) orbitCfg.offZ = v end })
+OL:AddToggle("OrbitReverse", { Text = "Reverse", Default = false, Callback = function(v) orbitCfg.reverse = v end })
+OL:AddToggle("OrbitFace", { Text = "Face Target", Default = true, Callback = function(v) orbitCfg.faceTarget = v end })
+OL:AddToggle("OrbitPredict", { Text = "Predict Target", Default = false, Callback = function(v) orbitCfg.predict = v end })
+OL:AddSlider("OrbitPredictStr", { Text = "Predict Strength (%)", Default = 20, Min = 0, Max = 100, Rounding = 0, Callback = function(v) orbitCfg.predictStr = v / 100 end })
+OL:AddSlider("OrbitLockDist", { Text = "Max Lock Dist", Default = 999999999, Min = 10, Max = 1e9, Rounding = 0, Callback = function(v) orbitCfg.lockDist = v end })
+OL:AddSlider("OrbitYawOff", { Text = "Yaw Offset (deg)", Default = 0, Min = -180, Max = 180, Rounding = 0, Callback = function(v) orbitCfg.yawOff = v end })
+OL:AddSlider("OrbitPitchOff", { Text = "Pitch Offset (deg)", Default = 0, Min = -90, Max = 90, Rounding = 0, Callback = function(v) orbitCfg.pitchOff = v end })
+OL:AddToggle("OrbitHeightOsc", { Text = "Height Oscillate", Default = false, Callback = function(v) orbitCfg.heightOsc = v end })
+OL:AddSlider("OrbitHeightOscAmp", { Text = "Height Amp", Default = 5, Min = 0, Max = 50, Rounding = 1, Callback = function(v) orbitCfg.heightOscAmp = v end })
+OL:AddSlider("OrbitHeightOscSpd", { Text = "Height Speed", Default = 2, Min = 0.1, Max = 20, Rounding = 1, Callback = function(v) orbitCfg.heightOscSpeed = v end })
+OL:AddToggle("OrbitRandRad", { Text = "Random Radius", Default = false, Callback = function(v) orbitCfg.randRad = v end })
+OL:AddSlider("OrbitRandMin", { Text = "Rand Radius Min", Default = 5, Min = 1, Max = 50, Rounding = 0, Callback = function(v) orbitCfg.randRadMin = v end })
+OL:AddSlider("OrbitRandMax", { Text = "Rand Radius Max", Default = 20, Min = 1, Max = 50, Rounding = 0, Callback = function(v) orbitCfg.randRadMax = v end })
+OL:AddToggle("OrbitSpeedRandom", { Text = "Random Speed", Default = false, Callback = function(v) orbitCfg.speedRandom = v end })
+OL:AddSlider("OrbitSpeedRandMin", { Text = "Speed Rand Min", Default = 20, Min = 1, Max = 720, Rounding = 0, Callback = function(v) orbitCfg.speedRandMin = v end })
+OL:AddSlider("OrbitSpeedRandMax", { Text = "Speed Rand Max", Default = 200, Min = 1, Max = 720, Rounding = 0, Callback = function(v) orbitCfg.speedRandMax = v end })
+OL:AddToggle("OrbitDistPulse", { Text = "Distance Pulse", Default = false, Callback = function(v) orbitCfg.distPulse = v end })
+OL:AddSlider("OrbitDistPulseAmp", { Text = "Pulse Amp", Default = 5, Min = 0, Max = 50, Rounding = 1, Callback = function(v) orbitCfg.distPulseAmp = v end })
+OL:AddSlider("OrbitDistPulseSpd", { Text = "Pulse Speed", Default = 1, Min = 0.1, Max = 10, Rounding = 1, Callback = function(v) orbitCfg.distPulseSpeed = v end })
+OL:AddToggle("OrbitSnapBack", { Text = "Snap Back to Target", Default = false, Callback = function(v) orbitCfg.snapBack = v end })
+OL:AddSlider("OrbitSnapInterval", { Text = "Snap Interval (s)", Default = 0.5, Min = 0.1, Max = 5, Rounding = 1, Callback = function(v) orbitCfg.snapInterval = v end })
+
+OM:AddToggle("OrbitMoveEnabled", { Text = "Enable Movement Offset", Default = false, Callback = function(v) orbitCfg.movementEnabled = v end })
+OM:AddDropdown("OrbitMoveMode", { Text = "Move Mode", Default = "World", Values = { "World", "Camera" }, Callback = function(v) orbitCfg.moveMode = v end })
+OM:AddSlider("OrbitMoveForward", { Text = "Move Forward", Default = 0, Min = -100, Max = 100, Rounding = 1, Callback = function(v) orbitCfg.moveForward = v end })
+OM:AddSlider("OrbitMoveRight", { Text = "Move Right", Default = 0, Min = -100, Max = 100, Rounding = 1, Callback = function(v) orbitCfg.moveRight = v end })
+OM:AddSlider("OrbitMoveUp", { Text = "Move Up", Default = 0, Min = -100, Max = 100, Rounding = 1, Callback = function(v) orbitCfg.moveUp = v end })
+
+local PL = Tabs.Prediction:AddLeftGroupbox("Prediction V2")
+local PR = Tabs.Prediction:AddRightGroupbox("Advanced")
+
+local predToggle = PL:AddToggle("PredToggle", {
+    Text = "Enable Prediction",
+    Default = false,
+    Callback = function(val)
+        predCfg.enabled = val
+        if val then startPrediction() else stopPrediction() end
+    end
+})
+predToggle:AddKeyPicker("PredKey", {
+    Text = "Toggle Key",
+    Default = "None",
+    Mode = "Toggle",
+    NoUI = false,
+    SyncToggleState = true,
+    Modes = { "Toggle", "Hold" }
+})
+
+PL:AddSlider("PredRadius", { Text = "Danger Radius", Default = 120, Min = 5, Max = 5000, Rounding = 0, Callback = function(v) predCfg.dangerRadius = v end })
+PL:AddSlider("PredDodge", { Text = "Dodge Distance", Default = 80, Min = 5, Max = 500, Rounding = 0, Callback = function(v) predCfg.dodgeDist = v end })
+PL:AddSlider("PredCooldown", { Text = "Cooldown (ms)", Default = 30, Min = 10, Max = 2000, Rounding = 0, Callback = function(v) predCfg.cooldown = v / 1000 end })
+PL:AddSlider("PredThreshold", { Text = "Speed Threshold", Default = 300, Min = 100, Max = 5000, Rounding = 0, Callback = function(v) predCfg.speedThreshold = v end })
+PL:AddSlider("PredReactTime", { Text = "Reaction Time (x0.01s)", Default = 6, Min = 1, Max = 50, Rounding = 0, Callback = function(v) predCfg.reactTime = v * 0.01 end })
+PL:AddSlider("PredShootDot", { Text = "Aim Threshold (%)", Default = 80, Min = 50, Max = 99, Rounding = 0, Callback = function(v) predCfg.shootDot = v * 0.01 end })
+PL:AddToggle("PredRaycast", { Text = "Raycast Line of Fire", Default = true, Callback = function(v) predCfg.raycast = v end })
+PL:AddToggle("PredAnim", { Text = "Animation Detect", Default = true, Callback = function(v) predCfg.animDetect = v end })
+PL:AddToggle("PredMultiPoint", { Text = "Multi-Point Dodge", Default = true, Callback = function(v) predCfg.multiPoint = v end })
+PL:AddToggle("PredBackstep", { Text = "Backstep Dodge", Default = true, Callback = function(v) predCfg.backstep = v end })
+PL:AddToggle("PredReactionLadder", { Text = "Reaction Ladder", Default = true, Callback = function(v) predCfg.reactionLadder = v end })
+PL:AddToggle("PredVerticalSpike", { Text = "Vertical Spike", Default = true, Callback = function(v) predCfg.verticalSpike = v end })
+
+PR:AddToggle("PredPredictAim", { Text = "Predictive Aim", Default = true, Callback = function(v) predCfg.predictAim = v end })
+PR:AddSlider("PredPredictAimLead", { Text = "Predict Aim Lead (x0.01s)", Default = 25, Min = 1, Max = 200, Rounding = 0, Callback = function(v) predCfg.predictAimLead = v * 0.01 end })
+PR:AddToggle("PredInfinite", { Text = "Infinite Range", Default = false, Callback = function(v) predCfg.infiniteRange = v end })
+PR:AddToggle("PredNotify", { Text = "Notify on Dodge", Default = false, Callback = function(v) predCfg.notify = v end })
+PR:AddToggle("PredNotifyAnywhere", { Text = "Notify Anywhere", Default = false, Callback = function(v) predCfg.notifyAnywhere = v end })
+
+local AL = Tabs.AntiAim:AddLeftGroupbox("Anti-Aim")
+local AM = Tabs.AntiAim:AddRightGroupbox("Movement")
+
+local aaToggle = AL:AddToggle("AaToggle", {
+    Text = "Enable Anti-Aim",
+    Default = false,
+    Callback = function(val)
+        aaCfg.enabled = val
+        if val then startAntiAim() else stopAntiAim() end
+    end
+})
+aaToggle:AddKeyPicker("AaKey", {
+    Text = "Toggle Key",
+    Default = "None",
+    Mode = "Toggle",
+    NoUI = false,
+    SyncToggleState = true,
+    Modes = { "Toggle", "Hold" }
+})
+
+AL:AddDropdown("AaMode", { Text = "Mode", Default = "RandomSpin", Values = { "Spin", "Jitter", "Static", "RandomSpin", "Custom", "Up", "Down", "Side" }, Callback = function(v) aaCfg.mode = v end })
+AL:AddSlider("AaSpeed", { Text = "Speed (deg/s)", Default = 5000, Min = 100, Max = 5000, Rounding = 0, Callback = function(v) aaCfg.speed = v end })
+AL:AddSlider("AaPitchAngle", { Text = "Jitter Pitch Angle", Default = 45, Min = 0, Max = 90, Rounding = 0, Callback = function(v) aaCfg.pitchAngle = v end })
+AL:AddSlider("AaYawAngle", { Text = "Jitter Yaw Angle", Default = 45, Min = 0, Max = 180, Rounding = 0, Callback = function(v) aaCfg.yawAngle = v end })
+AL:AddSlider("AaStaticYaw", { Text = "Static Yaw", Default = 90, Min = -180, Max = 180, Rounding = 0, Callback = function(v) aaCfg.staticYaw = v end })
+AL:AddSlider("AaStaticPitch", { Text = "Static Pitch", Default = 0, Min = -90, Max = 90, Rounding = 0, Callback = function(v) aaCfg.staticPitch = v end })
+AL:AddSlider("AaCustomYaw", { Text = "Custom Yaw", Default = 180, Min = -180, Max = 180, Rounding = 0, Callback = function(v) aaCfg.customYaw = v end })
+AL:AddSlider("AaCustomPitch", { Text = "Custom Pitch", Default = 0, Min = -90, Max = 90, Rounding = 0, Callback = function(v) aaCfg.customPitch = v end })
+AL:AddToggle("AaRandomSpeed", { Text = "Randomize Speed", Default = true, Callback = function(v) aaCfg.randomSpeed = v end })
+AL:AddToggle("AaFakeAngle", { Text = "Fake Angle", Default = false, Callback = function(v) aaCfg.fakeAngle = v end })
+AL:AddSlider("AaFakeYaw", { Text = "Fake Yaw Offset", Default = 45, Min = -180, Max = 180, Rounding = 0, Callback = function(v) aaCfg.fakeYaw = v end })
+AL:AddSlider("AaFakePitch", { Text = "Fake Pitch Offset", Default = 0, Min = -90, Max = 90, Rounding = 0, Callback = function(v) aaCfg.fakePitch = v end })
+AL:AddToggle("AaMicroJitter", { Text = "Micro Jitter", Default = false, Callback = function(v) aaCfg.microJitter = v end })
+AL:AddSlider("AaMicroJitterAmp", { Text = "Micro Jitter Amp", Default = 5, Min = 0, Max = 45, Rounding = 1, Callback = function(v) aaCfg.microJitterAmp = v end })
+AL:AddSlider("AaMicroJitterSpd", { Text = "Micro Jitter Speed", Default = 30, Min = 1, Max = 120, Rounding = 0, Callback = function(v) aaCfg.microJitterSpeed = v end })
+AL:AddToggle("AaDesync", { Text = "Desync Mode", Default = false, Callback = function(v) aaCfg.desyncMode = v end })
+AL:AddSlider("AaDesyncOffset", { Text = "Desync Yaw Offset", Default = 180, Min = 0, Max = 360, Rounding = 0, Callback = function(v) aaCfg.desyncOffset = v end })
+AL:AddToggle("AaRoll", { Text = "Roll Axis", Default = false, Callback = function(v) aaCfg.rollEnabled = v end })
+AL:AddSlider("AaRollSpeed", { Text = "Roll Speed (deg/s)", Default = 360, Min = 10, Max = 720, Rounding = 0, Callback = function(v) aaCfg.rollSpeed = v end })
+AL:AddToggle("AaBreathe", { Text = "Breathe Effect", Default = false, Callback = function(v) aaCfg.breathe = v end })
+AL:AddSlider("AaBreatheAmp", { Text = "Breathe Amp", Default = 3, Min = 0, Max = 30, Rounding = 1, Callback = function(v) aaCfg.breatheAmp = v end })
+AL:AddSlider("AaBreatheSpeed", { Text = "Breathe Speed", Default = 1, Min = 0.1, Max = 10, Rounding = 1, Callback = function(v) aaCfg.breatheSpeed = v end })
+AL:AddToggle("AaRandomFlip", { Text = "Random Flip", Default = false, Callback = function(v) aaCfg.randomFlip = v end })
+AL:AddSlider("AaFlipChance", { Text = "Flip Chance (%)", Default = 5, Min = 1, Max = 50, Rounding = 0, Callback = function(v) aaCfg.flipChance = v * 0.01 end })
+
+AM:AddToggle("AaMoveEnabled", { Text = "Enable Movement Offset", Default = false, Callback = function(v) aaCfg.moveEnabled = v end })
+AM:AddDropdown("AaMoveMode", { Text = "Move Mode", Default = "World", Values = { "World", "Camera" }, Callback = function(v) aaCfg.moveMode = v end })
+AM:AddSlider("AaMoveForward", { Text = "Move Forward", Default = 0, Min = -100, Max = 100, Rounding = 1, Callback = function(v) aaCfg.moveForward = v end })
+AM:AddSlider("AaMoveRight", { Text = "Move Right", Default = 0, Min = -100, Max = 100, Rounding = 1, Callback = function(v) aaCfg.moveRight = v end })
+AM:AddSlider("AaMoveUp", { Text = "Move Up", Default = 0, Min = -100, Max = 100, Rounding = 1, Callback = function(v) aaCfg.moveUp = v end })
+AM:AddToggle("AaSpinOrbit", { Text = "Spin Orbit Body", Default = false, Callback = function(v) aaCfg.spinOrbit = v end })
+AM:AddSlider("AaSpinOrbitRadius", { Text = "Orbit Radius", Default = 3, Min = 0.5, Max = 30, Rounding = 1, Callback = function(v) aaCfg.spinOrbitRadius = v end })
+AM:AddSlider("AaSpinOrbitSpeed", { Text = "Orbit Speed", Default = 5, Min = 0.5, Max = 30, Rounding = 1, Callback = function(v) aaCfg.spinOrbitSpeed = v end })
+AM:AddToggle("AaUpDown", { Text = "Up-Down Bob", Default = false, Callback = function(v) aaCfg.upDown = v end })
+AM:AddSlider("AaUpDownAmp", { Text = "Bob Amplitude", Default = 2, Min = 0, Max = 30, Rounding = 1, Callback = function(v) aaCfg.upDownAmp = v end })
+AM:AddSlider("AaUpDownSpeed", { Text = "Bob Speed", Default = 3, Min = 0.1, Max = 20, Rounding = 1, Callback = function(v) aaCfg.upDownSpeed = v end })
+
+local ABL = Tabs.AntiBait:AddLeftGroupbox("Anti Bait")
+local ABR = Tabs.AntiBait:AddRightGroupbox("Detection")
+
+local abToggle = ABL:AddToggle("AntiBaitToggle", {
+    Text = "Enable Anti Bait",
+    Default = false,
+    Callback = function(val)
+        abCfg.enabled = val
+        if val then startAntiBait() else stopAntiBait() end
+    end
+})
+abToggle:AddKeyPicker("ABKey", {
+    Text = "Toggle Key",
+    Default = "None",
+    Mode = "Toggle",
+    NoUI = false,
+    SyncToggleState = true,
+    Modes = { "Toggle", "Hold" }
+})
+
+ABL:AddSlider("ABDodgeDist", { Text = "Dodge Distance", Default = 60, Min = 5, Max = 500, Rounding = 0, Callback = function(v) abCfg.dodgeDist = v end })
+ABL:AddSlider("ABCooldown", { Text = "Cooldown (ms)", Default = 50, Min = 10, Max = 2000, Rounding = 0, Callback = function(v) abCfg.cooldown = v / 1000 end })
+ABL:AddDropdown("ABDodgeMode", {
+    Text = "Dodge Direction",
+    Default = "Perpendicular",
+    Values = { "Perpendicular", "Away", "Toward", "Up", "Down", "Diagonal", "Spiral", "Backstep", "SideStep" },
+    Callback = function(v) abCfg.dodgeMode = v end
+})
+ABL:AddToggle("ABVerticalSpike", { Text = "Vertical Spike", Default = false, Callback = function(v) abCfg.verticalSpike = v end })
+ABL:AddToggle("ABNotify", { Text = "Notify on Dodge", Default = true, Callback = function(v) abCfg.notify = v end })
+ABL:AddSlider("ABSafeRadius", { Text = "Safe Radius", Default = 0, Min = 0, Max = 200, Rounding = 0, Callback = function(v) abCfg.safeRadius = v end })
+ABL:AddToggle("ABInfinite", { Text = "Infinite Detection Range", Default = false, Callback = function(v) abCfg.infiniteRange = v end })
+
+ABR:AddToggle("ABVel", { Text = "Velocity Spike Detect", Default = true, Callback = function(v) abCfg.velEnabled = v end })
+ABR:AddSlider("ABVelThresh", { Text = "Vel Threshold", Default = 200, Min = 50, Max = 2000, Rounding = 0, Callback = function(v) abCfg.velThreshold = v end })
+ABR:AddToggle("ABFlicker", { Text = "Flicker Detect", Default = true, Callback = function(v) abCfg.flickerEnabled = v end })
+ABR:AddSlider("ABFlickerWindow", { Text = "Flicker Window (s)", Default = 0.5, Min = 0.1, Max = 3, Rounding = 1, Callback = function(v) abCfg.flickerWindow = v end })
+ABR:AddSlider("ABFlickerMinTps", { Text = "Min TPs to Confirm", Default = 3, Min = 2, Max = 10, Rounding = 0, Callback = function(v) abCfg.flickerMinTps = v end })
+ABR:AddSlider("ABFlickerDist", { Text = "TP Delta (studs)", Default = 12, Min = 5, Max = 100, Rounding = 0, Callback = function(v) abCfg.flickerTpDist = v end })
+ABR:AddToggle("ABLookAt", { Text = "Look-At Detect", Default = true, Callback = function(v) abCfg.lookAtEnabled = v end })
+ABR:AddSlider("ABLookDot", { Text = "Look Dot Threshold (%)", Default = 85, Min = 50, Max = 99, Rounding = 0, Callback = function(v) abCfg.lookDotThresh = v * 0.01 end })
+ABR:AddToggle("ABGun", { Text = "Gun Aiming Detect", Default = true, Callback = function(v) abCfg.gunDetect = v end })
+ABR:AddSlider("ABGunDot", { Text = "Gun Dot Threshold (%)", Default = 80, Min = 50, Max = 99, Rounding = 0, Callback = function(v) abCfg.gunDot = v * 0.01 end })
+ABR:AddToggle("ABPredict", { Text = "Predictive Aim Detect", Default = true, Callback = function(v) abCfg.aimPredict = v end })
+ABR:AddSlider("ABPredictLead", { Text = "Predict Lead (x0.01s)", Default = 25, Min = 1, Max = 100, Rounding = 0, Callback = function(v) abCfg.aimPredictLead = v * 0.01 end })
+
+local FPL = Tabs.FakePos:AddLeftGroupbox("Fake Position")
+local FPR = Tabs.FakePos:AddRightGroupbox("Pattern")
+
+local fpToggle = FPL:AddToggle("FakePosToggle", {
+    Text = "Enable Fake Position",
+    Default = false,
+    Callback = function(val)
+        fakeCfg.enabled = val
+        if val then startFakePos() else stopFakePos() end
+    end
+})
+fpToggle:AddKeyPicker("FPKey", {
+    Text = "Toggle Key",
+    Default = "None",
+    Mode = "Toggle",
+    NoUI = false,
+    SyncToggleState = true,
+    Modes = { "Toggle", "Hold" }
+})
+
+FPL:AddSlider("FPRadius", { Text = "Radius (studs)", Default = 500, Min = 1, Max = 500000, Rounding = 0, Callback = function(v) fakeCfg.radius = v end })
+FPL:AddSlider("FPSpeed", { Text = "Speed", Default = 30, Min = 1, Max = 200, Rounding = 0, Callback = function(v) fakeCfg.speed = v end })
+FPL:AddSlider("FPHeight", { Text = "Height Offset", Default = 200, Min = -1000, Max = 1000, Rounding = 0, Callback = function(v) fakeCfg.height = v end })
+FPL:AddSlider("FPYDist", { Text = "Y Distance", Default = 300, Min = 0, Max = 100000, Rounding = 0, Callback = function(v) fakeCfg.yDist = v end })
+FPL:AddSlider("FPScatterAngle", { Text = "Scatter Angle (deg)", Default = 360, Min = 10, Max = 360, Rounding = 0, Callback = function(v) fakeCfg.scatterAngle = v end })
+FPL:AddToggle("FPRandomizeEvery", { Text = "Randomize Every Frame", Default = false, Callback = function(v) fakeCfg.randomizeEveryFrame = v end })
+FPL:AddToggle("FPChaos", { Text = "Chaos Mode", Default = false, Callback = function(v) fakeCfg.chaosMode = v end })
+FPL:AddSlider("FPChaosMult", { Text = "Chaos Mult", Default = 5, Min = 1, Max = 20, Rounding = 1, Callback = function(v) fakeCfg.chaosMult = v end })
+FPL:AddToggle("FPLayered", { Text = "Layered Fake", Default = false, Callback = function(v) fakeCfg.layeredFake = v end })
+FPL:AddSlider("FPLayerCount", { Text = "Layer Count", Default = 3, Min = 2, Max = 10, Rounding = 0, Callback = function(v) fakeCfg.layerCount = v end })
+FPL:AddToggle("FPPulse", { Text = "Pulse Radius", Default = false, Callback = function(v) fakeCfg.pulseRadius = v end })
+FPL:AddSlider("FPPulseMin", { Text = "Pulse Min", Default = 100, Min = 1, Max = 10000, Rounding = 0, Callback = function(v) fakeCfg.pulseRadiusMin = v end })
+FPL:AddSlider("FPPulseMax", { Text = "Pulse Max", Default = 1500, Min = 1, Max = 100000, Rounding = 0, Callback = function(v) fakeCfg.pulseRadiusMax = v end })
+FPL:AddSlider("FPPulseSpeed", { Text = "Pulse Speed", Default = 2, Min = 0.1, Max = 20, Rounding = 1, Callback = function(v) fakeCfg.pulseSpeed = v end })
+
+FPR:AddDropdown("FPPattern", { Text = "Pattern", Default = "Scatter", Values = { "Scatter", "Linear", "Circle", "Random", "Spiral" }, Callback = function(v) fakeCfg.pattern = v end })
+FPR:AddDropdown("FPDistribution", { Text = "Distribution", Default = "Random", Values = { "Random", "Uniform", "Weighted", "Radial", "Clustered" }, Callback = function(v) fakeCfg.distribution = v end })
+FPR:AddDropdown("FPAxisLock", { Text = "Axis Lock", Default = "None", Values = { "None", "X", "Y", "Z", "XZ" }, Callback = function(v) fakeCfg.axisLock = v end })
+
+local MenuG = Tabs.Settings:AddLeftGroupbox("Menu")
+
+MenuG:AddButton("Kill All Features", function()
+    stopVoidSpam(); stopOrbit(); stopPrediction(); stopAntiAim(); stopAntiBait(); stopFakePos()
+    cfg.voidEnabled = false
+    orbitCfg.enabled = false
+    predCfg.enabled = false
+    aaCfg.enabled = false
+    abCfg.enabled = false
+    fakeCfg.enabled = false
+    Toggles.VoidToggle:SetValue(false)
+    Toggles.OrbitToggle:SetValue(false)
+    Toggles.PredToggle:SetValue(false)
+    Toggles.AaToggle:SetValue(false)
+    Toggles.AntiBaitToggle:SetValue(false)
+    Toggles.FakePosToggle:SetValue(false)
+    Notify("All features stopped", 3)
+end)
+
+MenuG:AddButton("Rejoin Server", function()
+    pcall(function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId, LP)
+    end)
+end)
+
+MenuG:AddButton("Server Hop", function()
+    pcall(function()
+        local Http = game:GetService("HttpService")
+        local TS = game:GetService("TeleportService")
+        local data = Http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+        for _, srv in ipairs(data.data) do
+            if srv.playing < srv.maxPlayers and srv.id ~= game.JobId then
+                TS:TeleportToPlaceInstance(game.PlaceId, srv.id, LP)
+                break
+            end
+        end
+    end)
+end)
+
+MenuG:AddToggle("KeybindMenu", {
+    Text = "Keybind Menu",
+    Default = false,
+    Callback = function(v)
+        pcall(function() if Library.KeybindFrame then Library.KeybindFrame.Visible = v end end)
+    end
+})
+
+local UIGroup = Tabs.Settings:AddLeftGroupbox("UI")
+UIGroup:AddLabel("Menu Keybind"):AddKeyPicker("MenuKeybind", {
+    Default = "RightShift",
+    Text = "Menu Keybind",
+    Mode = "Toggle",
+    NoUI = false
+})
+Library.ToggleKeybind = Options.MenuKeybind
+
+UIGroup:AddToggle("AutoLoad", { Text = "Auto Load Config", Default = true })
+UIGroup:AddButton("Unload Script", function() Library:Unload() end)
+
+local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/main/addons/ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/main/addons/SaveManager.lua"))()
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
+ThemeManager:SetFolder("LuaXBeta")
+SaveManager:SetFolder("LuaXBeta/configs")
+ThemeManager:ApplyToTab(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+pcall(function() SaveManager:LoadAutoloadConfig() end)
+
+local studGui = Instance.new("ScreenGui")
+studGui.Name = "LuaXBetaStud"
+studGui.ResetOnSpawn = false
+studGui.DisplayOrder = 9996
+studGui.IgnoreGuiInset = true
+pcall(function() studGui.Parent = game:GetService("CoreGui") end)
+if not studGui.Parent then studGui.Parent = LP:WaitForChild("PlayerGui") end
+
+local hud = Instance.new("Frame")
+hud.Size = UDim2.new(0, 178, 0, 96)
+hud.Position = UDim2.new(1, -190, 0, 16)
+hud.BackgroundColor3 = Color3.fromRGB(10, 8, 15)
+hud.BackgroundTransparency = 0.08
+hud.BorderSizePixel = 0
+hud.Active = true
+hud.Parent = studGui
+local hudC = Instance.new("UICorner"); hudC.CornerRadius = UDim.new(0, 4); hudC.Parent = hud
+local hudS = Instance.new("UIStroke"); hudS.Color = Color3.fromRGB(80, 55, 130); hudS.Thickness = 1; hudS.Transparency = 0.35; hudS.Parent = hud
+
+local accent = Instance.new("Frame")
+accent.Size = UDim2.new(0, 2, 0, 80)
+accent.Position = UDim2.new(0, 0, 0, 8)
+accent.BackgroundColor3 = Color3.fromRGB(150, 90, 240)
+accent.BorderSizePixel = 0
+accent.Parent = hud
+local accC = Instance.new("UICorner"); accC.CornerRadius = UDim.new(1, 0); accC.Parent = accent
+local accG = Instance.new("UIGradient")
+accG.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 90, 240)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 210, 230)),
+})
+accG.Rotation = 90
+accG.Parent = accent
+
+local headerBar = Instance.new("Frame")
+headerBar.Size = UDim2.new(1, -10, 0, 16)
+headerBar.Position = UDim2.new(0, 10, 0, 6)
+headerBar.BackgroundTransparency = 1
+headerBar.Parent = hud
+
+local liveDot = Instance.new("Frame")
+liveDot.Size = UDim2.new(0, 5, 0, 5)
+liveDot.Position = UDim2.new(0, 0, 0.5, -2.5)
+liveDot.BackgroundColor3 = Color3.fromRGB(150, 90, 240)
+liveDot.BorderSizePixel = 0
+liveDot.Parent = headerBar
+local liveDotC = Instance.new("UICorner"); liveDotC.CornerRadius = UDim.new(1, 0); liveDotC.Parent = liveDot
+
+local headerText = Instance.new("TextLabel")
+headerText.Size = UDim2.new(1, -20, 1, 0)
+headerText.Position = UDim2.new(0, 10, 0, 0)
+headerText.BackgroundTransparency = 1
+headerText.Text = "POSITION"
+headerText.TextColor3 = Color3.fromRGB(170, 160, 200)
+headerText.Font = Enum.Font.GothamMedium
+headerText.TextSize = 9
+headerText.TextXAlignment = Enum.TextXAlignment.Left
+headerText.Parent = headerBar
+
+local hudDivider = Instance.new("Frame")
+hudDivider.Size = UDim2.new(1, -20, 0, 1)
+hudDivider.Position = UDim2.new(0, 10, 0, 24)
+hudDivider.BackgroundColor3 = Color3.fromRGB(45, 38, 65)
+hudDivider.BorderSizePixel = 0
+hudDivider.BackgroundTransparency = 0.3
+hudDivider.Parent = hud
+
+local rows = {
+    { key = "X", col = Color3.fromRGB(230, 90, 90),   dim = Color3.fromRGB(85, 35, 35) },
+    { key = "Y", col = Color3.fromRGB(90, 220, 130),  dim = Color3.fromRGB(35, 85, 50) },
+    { key = "Z", col = Color3.fromRGB(90, 140, 240),  dim = Color3.fromRGB(35, 55, 95) },
+}
+local axisVals = {}
+local axisBars = {}
+
+for i, r in ipairs(rows) do
+    local y = 30 + (i - 1) * 22
+
+    local keyBox = Instance.new("Frame")
+    keyBox.Size = UDim2.new(0, 16, 0, 16)
+    keyBox.Position = UDim2.new(0, 10, 0, y)
+    keyBox.BackgroundColor3 = r.dim
+    keyBox.BackgroundTransparency = 0.4
+    keyBox.BorderSizePixel = 0
+    keyBox.Parent = hud
+    local kbC = Instance.new("UICorner"); kbC.CornerRadius = UDim.new(0, 3); kbC.Parent = keyBox
+    local kbS = Instance.new("UIStroke"); kbS.Color = r.col; kbS.Thickness = 1; kbS.Transparency = 0.5; kbS.Parent = keyBox
+
+    local keyLbl = Instance.new("TextLabel")
+    keyLbl.Size = UDim2.new(1, 0, 1, 0)
+    keyLbl.BackgroundTransparency = 1
+    keyLbl.Text = r.key
+    keyLbl.TextColor3 = r.col
+    keyLbl.Font = Enum.Font.GothamBold
+    keyLbl.TextSize = 10
+    keyLbl.Parent = keyBox
+
+    local valLbl = Instance.new("TextLabel")
+    valLbl.Size = UDim2.new(0, 100, 0, 14)
+    valLbl.Position = UDim2.new(0, 32, 0, y + 1)
+    valLbl.BackgroundTransparency = 1
+    valLbl.Text = "0.0"
+    valLbl.TextColor3 = Color3.fromRGB(215, 215, 230)
+    valLbl.Font = Enum.Font.Code
+    valLbl.TextSize = 11
+    valLbl.TextXAlignment = Enum.TextXAlignment.Left
+    valLbl.Parent = hud
+    axisVals[r.key] = valLbl
+
+    local barBg = Instance.new("Frame")
+    barBg.Size = UDim2.new(1, -42, 0, 2)
+    barBg.Position = UDim2.new(0, 32, 0, y + 15)
+    barBg.BackgroundColor3 = Color3.fromRGB(24, 20, 35)
+    barBg.BorderSizePixel = 0
+    barBg.Parent = hud
+    local bbC = Instance.new("UICorner"); bbC.CornerRadius = UDim.new(1, 0); bbC.Parent = barBg
+
+    local barFill = Instance.new("Frame")
+    barFill.Size = UDim2.new(0, 0, 1, 0)
+    barFill.BackgroundColor3 = r.col
+    barFill.BorderSizePixel = 0
+    barFill.Parent = barBg
+    local bfC = Instance.new("UICorner"); bfC.CornerRadius = UDim.new(1, 0); bfC.Parent = barFill
+    axisBars[r.key] = barFill
+end
+
+local hudDrag = false
+local hudOrigin = Vector2.zero
+local hudStart = Vector2.zero
+
+hud.InputBegan:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+        hudDrag = true; hudOrigin = inp.Position; hudStart = hud.Position
+    end
+end)
+hud.InputEnded:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 then hudDrag = false end
+end)
+UIS.InputChanged:Connect(function(inp)
+    if hudDrag and inp.UserInputType == Enum.UserInputType.MouseMovement then
+        local d = inp.Position - hudOrigin
+        hud.Position = UDim2.new(hudStart.X.Scale, hudStart.X.Offset + d.X, hudStart.Y.Scale, hudStart.Y.Offset + d.Y)
+    end
+end)
+
+local function fmt(n)
+    local a = math.abs(n)
+    if a >= 1e9 then
+        return string.format("%.2fB", n / 1e9)
+    elseif a >= 1e6 then
+        return string.format("%.2fM", n / 1e6)
+    elseif a >= 1e4 then
+        return string.format("%.1fK", n / 1e3)
+    elseif a >= 100 then
+        return string.format("%.1f", n)
+    else
+        return string.format("%.2f", n)
+    end
+end
+
+local hudT = 0
+RunService.Heartbeat:Connect(function(dt)
+    if not studGui.Enabled then return end
+    hudT = hudT + dt * 3
+    local p = (math.sin(hudT) + 1) * 0.5
+    liveDot.BackgroundColor3 = Color3.fromRGB(
+        math.floor(120 + p * 50),
+        math.floor(70 + p * 50),
+        math.floor(220 + p * 30)
+    )
+
+    local c = LP.Character
+    local hrp = c and c:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        local pos = hrp.Position
+        axisVals.X.Text = fmt(pos.X)
+        axisVals.Y.Text = fmt(pos.Y)
+        axisVals.Z.Text = fmt(pos.Z)
+
+        local nx = math.clamp(math.abs(pos.X) / 10000, 0, 1)
+        local ny = math.clamp(math.abs(pos.Y) / 10000, 0, 1)
+        local nz = math.clamp(math.abs(pos.Z) / 10000, 0, 1)
+        axisBars.X.Size = UDim2.new(nx, 0, 1, 0)
+        axisBars.Y.Size = UDim2.new(ny, 0, 1, 0)
+        axisBars.Z.Size = UDim2.new(nz, 0, 1, 0)
+    else
+        axisVals.X.Text = "--"
+        axisVals.Y.Text = "--"
+        axisVals.Z.Text = "--"
+        axisBars.X.Size = UDim2.new(0, 0, 1, 0)
+        axisBars.Y.Size = UDim2.new(0, 0, 1, 0)
+        axisBars.Z.Size = UDim2.new(0, 0, 1, 0)
+    end
+end)
+
+Notify("Lua x Beta v3.0 loaded", 4)
