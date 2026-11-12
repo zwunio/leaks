@@ -46,7 +46,7 @@ local function label(parent, str, pos, size, c, align)
     return make("TextLabel", { BackgroundTransparency = 1, Text = str, Font = font, TextSize = fsize, TextColor3 = c or col.text, Position = pos, Size = size, TextXAlignment = align or Enum.TextXAlignment.Left }, parent)
 end
 
-local gui = make("ScreenGui", { Name = "PetRageSuite", ResetOnSpawn = false, IgnoreGuiInset = true, ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, Players.LocalPlayer:WaitForChild("PlayerGui"))
+local gui = make("ScreenGui", { Name = "PetRageSuite", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 1000000, ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, Players.LocalPlayer:WaitForChild("PlayerGui"))
 
 local crossGui = make("ScreenGui", { Name = "PetCrosshair", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 9999 }, Players.LocalPlayer:WaitForChild("PlayerGui"))
 local crossCenter = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), BackgroundTransparency = 1, Visible = false }, crossGui)
@@ -216,7 +216,7 @@ local function newButton(parent, opts)
     return b
 end
 
-local ddGui = make("ScreenGui", { Name = "PetDropdowns", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 100000, ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, Players.LocalPlayer:WaitForChild("PlayerGui"))
+local ddGui = make("ScreenGui", { Name = "PetDropdowns", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 1000001, ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, Players.LocalPlayer:WaitForChild("PlayerGui"))
 local openDropdown = nil
 local function closeDropdown() if openDropdown then openDropdown:Destroy(); openDropdown = nil end end
 
