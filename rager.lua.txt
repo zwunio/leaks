@@ -1,0 +1,2384 @@
+-- ============================================================
+-- Pet GUI + Rage Suite + Visuals + ULTIMATE Combat (FIXED)
+-- ============================================================
+local Players = game:GetService("Players")
+local UIS     = game:GetService("UserInputService")
+local cam     = workspace.CurrentCamera
+local RunSvc  = game:GetService("RunService")
+local LP      = Players.LocalPlayer
+
+local scaleMult = 1
+local pcButton  = false
+
+local col = {
+    bg = Color3.fromRGB(14, 14, 15),
+    line = Color3.fromRGB(78, 82, 92),
+    panel = Color3.fromRGB(17, 17, 18),
+    panelLine = Color3.fromRGB(44, 44, 47),
+    text = Color3.fromRGB(205, 205, 210),
+    dim = Color3.fromRGB(150, 150, 156),
+    off = Color3.fromRGB(95, 95, 100),
+    accent = Color3.fromRGB(150, 195, 235),
+    tab = Color3.fromRGB(20, 20, 22),
+    tabOn = Color3.fromRGB(26, 27, 31),
+    tabLine = Color3.fromRGB(40, 40, 43),
+    tabLineOn = Color3.fromRGB(70, 74, 84),
+    box = Color3.fromRGB(22, 22, 24),
+    boxLine = Color3.fromRGB(52, 52, 56),
+    fillA = Color3.fromRGB(122, 130, 145),
+    fillB = Color3.fromRGB(84, 90, 102),
+}
+local font, fsize = Enum.Font.Arial, 13
+
+local function make(class, props, parent)
+    local o = Instance.new(class)
+    for k, v in pairs(props) do o[k] = v end
+    o.Parent = parent
+    return o
+end
+local function outline(o, c, t)
+    return make("UIStroke", { Color = c, Thickness = t or 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, o)
+end
+local function shade(o, a, b)
+    return make("UIGradient", { Color = ColorSequence.new(a, b), Rotation = 90 }, o)
+end
+local function label(parent, str, pos, size, c, align)
+    return make("TextLabel", { BackgroundTransparency = 1, Text = str, Font = font, TextSize = fsize, TextColor3 = c or col.text, Position = pos, Size = size, TextXAlignment = align or Enum.TextXAlignment.Left }, parent)
+end
+
+local gui = make("ScreenGui", { Name = "PetRageSuite", ResetOnSpawn = false, IgnoreGuiInset = true, ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, Players.LocalPlayer:WaitForChild("PlayerGui"))
+
+local crossGui = make("ScreenGui", { Name = "PetCrosshair", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 9999 }, Players.LocalPlayer:WaitForChild("PlayerGui"))
+local crossCenter = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), BackgroundTransparency = 1, Visible = false }, crossGui)
+local cLines = {}
+for i = 1, 4 do
+    cLines[i] = make("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0 }, crossCenter)
+end
+
+local fovFrameAimbot = make("Frame", { Name = "FOVAimbot", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), BackgroundTransparency = 1, BorderSizePixel = 0, Visible = false, ZIndex = 1 }, gui)
+make("UICorner", { CornerRadius = UDim.new(1, 0) }, fovFrameAimbot)
+make("UIStroke", { Color = Color3.fromRGB(255, 255, 255), Thickness = 1, Transparency = 0.5 }, fovFrameAimbot)
+
+local fovFrameSilent = make("Frame", { Name = "FOVSilent", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), BackgroundTransparency = 1, BorderSizePixel = 0, Visible = false, ZIndex = 1 }, gui)
+make("UICorner", { CornerRadius = UDim.new(1, 0) }, fovFrameSilent)
+make("UIStroke", { Color = Color3.fromRGB(255, 100, 100), Thickness = 1, Transparency = 0.5 }, fovFrameSilent)
+
+local main = make("Frame", { Size = UDim2.fromOffset(640, 590), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), BackgroundColor3 = col.bg, BorderSizePixel = 0 }, gui)
+outline(main, col.line)
+
+local uiscale = make("UIScale", {}, main)
+local function fit()
+    local vp = cam.ViewportSize
+    local s = math.min(vp.X / 660, vp.Y / 620, 1) * scaleMult
+    if UIS.TouchEnabled then s = math.max(s, 0.55) end
+    uiscale.Scale = math.max(s, 0.4)
+end
+fit()
+cam:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+
+local titleBar = make("Frame", { Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1, Active = true }, main)
+make("TextLabel", { BackgroundTransparency = 1, Position = UDim2.fromOffset(9, 0), Size = UDim2.new(1, -36, 0, 25), Font = font, TextSize = fsize, TextColor3 = col.text, RichText = true, TextXAlignment = Enum.TextXAlignment.Left, Text = 'Rage <font color="rgb(170,178,192)">Suite + Ultimate Combat</font>' }, titleBar)
+
+local minBtn = make("TextButton", { Name = "Minimize", Size = UDim2.fromOffset(24, 20), AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -8, 0, 6), BackgroundColor3 = col.tab, BorderSizePixel = 0, AutoButtonColor = false, Text = "-", Font = font, TextSize = 16, TextColor3 = col.text }, titleBar)
+outline(minBtn, col.tabLine)
+make("Frame", { Position = UDim2.fromOffset(1, 25), Size = UDim2.new(1, -2, 0, 1), BackgroundColor3 = Color3.fromRGB(38, 38, 41), BorderSizePixel = 0 }, main)
+
+local function isPress(i) return i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch end
+local function isMove(i) return i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch end
+
+local function drag(handle, target, onTap, thresh)
+    thresh = thresh or 0
+    local down, moved, press, start, origin
+    handle.InputBegan:Connect(function(i)
+        if not isPress(i) then return end
+        down, moved, press = true, false, i
+        start, origin = Vector2.new(i.Position.X, i.Position.Y), target.AbsolutePosition + target.AbsoluteSize / 2
+        local c
+        c = i.Changed:Connect(function()
+            if i.UserInputState ~= Enum.UserInputState.End then return end
+            c:Disconnect()
+            if down then down = false; if not moved and onTap then onTap() end end
+        end)
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if not down then return end
+        local touch = press.UserInputType == Enum.UserInputType.Touch
+        if touch and i ~= press then return end
+        if not touch and i.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+        local d = Vector2.new(i.Position.X, i.Position.Y) - start
+        if not moved then if d.Magnitude < thresh then return end; moved = true end
+        local vp, half = cam.ViewportSize, target.AbsoluteSize / 2
+        local p = origin + d
+        target.Position = UDim2.fromOffset(math.clamp(p.X, half.X, math.max(half.X, vp.X - half.X)), math.clamp(p.Y, half.Y, math.max(half.Y, vp.Y - half.Y)))
+    end)
+    UIS.WindowFocusReleased:Connect(function() down = false end)
+end
+drag(titleBar, main)
+
+-- ============================================================
+-- Mouse Fix: keep cursor usable in-game while GUI is open
+-- ============================================================
+local function updateMouseState()
+    if main and main.Visible then
+        pcall(function()
+            UIS.MouseBehavior = Enum.MouseBehavior.Default
+            UIS.MouseIconEnabled = true
+        end)
+    end
+end
+
+-- Bind at "Last" priority so we override the game's re-lock every frame.
+pcall(function()
+    RunSvc:BindToRenderStep("PetRageSuite_MouseFix", Enum.RenderPriority.Last.Value, updateMouseState)
+end)
+
+-- Backup: also run on Heartbeat in case the game locks there instead.
+RunSvc.Heartbeat:Connect(updateMouseState)
+
+local function toggleGui()
+    main.Visible = not main.Visible
+    updateMouseState()
+end
+UIS.InputBegan:Connect(function(i, gp) if not gp and i.KeyCode == Enum.KeyCode.RightShift then toggleGui() end end)
+
+local btn = make("TextButton", { Name = "Toggle", Size = UDim2.fromOffset(40, 40), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(44, 130), BackgroundColor3 = col.accent, BorderSizePixel = 0, AutoButtonColor = false, Text = "R", FontFace = Font.fromEnum(Enum.Font.GothamBold), TextSize = 22, TextColor3 = col.bg, Visible = UIS.TouchEnabled or pcButton, ZIndex = 10 }, gui)
+shade(btn, Color3.new(1, 1, 1), Color3.fromRGB(205, 215, 230))
+outline(btn, Color3.fromRGB(190, 220, 245))
+drag(btn, btn, toggleGui, 6)
+
+local function newToggle(parent, opts)
+    local row = make("TextButton", { Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, Text = "", AutoButtonColor = false }, parent)
+    local box = make("Frame", { Position = UDim2.fromOffset(0, 5), Size = UDim2.fromOffset(12, 12), BorderSizePixel = 0 }, row)
+    local line = outline(box, col.boxLine)
+    local fill = shade(box, col.fillA, col.fillB)
+    local txt  = label(row, opts.name, UDim2.fromOffset(22, 0), UDim2.new(1, -22, 1, 0))
+    local state = { value = opts.default and true or false }
+    local function draw()
+        local on = state.value
+        fill.Enabled = on
+        box.BackgroundColor3 = on and Color3.new(1, 1, 1) or col.box
+        line.Color = on and Color3.fromRGB(160, 168, 182) or col.boxLine
+        txt.TextColor3 = on and col.text or col.off
+    end
+    draw()
+    row.MouseButton1Click:Connect(function()
+        state.value = not state.value; draw()
+        if opts.callback then pcall(opts.callback, state.value) end
+    end)
+    return state
+end
+
+local sliding = nil
+UIS.InputChanged:Connect(function(i) if sliding and isMove(i) then sliding(i.Position.X) end end)
+UIS.InputEnded:Connect(function(i) if isPress(i) then sliding = nil end end)
+
+local function newSlider(parent, opts)
+    local min, max, step = opts.min or 0, opts.max or 1, opts.step or 0
+    local holder = make("Frame", { Size = UDim2.new(1, 0, 0, 37), BackgroundTransparency = 1 }, parent)
+    label(holder, opts.name, UDim2.new(), UDim2.new(1, 0, 0, 16), col.dim)
+    local bar = make("TextButton", { Position = UDim2.fromOffset(0, 18), Size = UDim2.new(1, 0, 0, 15), BackgroundColor3 = col.box, BorderSizePixel = 0, Text = "", AutoButtonColor = false }, holder)
+    outline(bar, col.boxLine)
+    local fill = make("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0 }, bar)
+    shade(fill, col.fillA, col.fillB)
+    local val = label(bar, "", UDim2.new(), UDim2.fromScale(1, 1), col.text, Enum.TextXAlignment.Center)
+    val.ZIndex = 3
+    local function format(v)
+        if opts.suffix then
+            if step >= 1 then return string.format("%d%s", math.floor(v + 0.5), opts.suffix) end
+            return string.format("%.2f%s", v, opts.suffix)
+        end
+        if step >= 1 then return string.format("%d", math.floor(v + 0.5)) end
+        return string.format("%.2f", v)
+    end
+    local state = { value = opts.default or min }
+    local function apply(v)
+        if step > 0 then v = min + math.floor((v - min) / step + 0.5) * step end
+        v = math.clamp(v, min, max)
+        state.value = v
+        fill.Size = UDim2.fromScale((v - min) / (max - min), 1)
+        val.Text = format(v)
+    end
+    apply(state.value)
+    local function fromX(x)
+        local frac = (x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X
+        apply(min + math.clamp(frac, 0, 1) * (max - min))
+        if opts.callback then pcall(opts.callback, state.value) end
+    end
+    bar.InputBegan:Connect(function(i) if isPress(i) then sliding = fromX; fromX(i.Position.X) end end)
+    return state
+end
+
+local function newButton(parent, opts)
+    local b = make("TextButton", { Size = UDim2.new(1, 0, 0, 22), BackgroundColor3 = col.box, BorderSizePixel = 0, AutoButtonColor = false, Text = "" }, parent)
+    outline(b, col.boxLine)
+    label(b, opts.name, UDim2.fromOffset(8, 0), UDim2.new(1, -16, 1, 0), col.text)
+    b.MouseButton1Click:Connect(function() if opts.callback then pcall(opts.callback) end end)
+    return b
+end
+
+local ddGui = make("ScreenGui", { Name = "PetDropdowns", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 100000, ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, Players.LocalPlayer:WaitForChild("PlayerGui"))
+local openDropdown = nil
+local function closeDropdown() if openDropdown then openDropdown:Destroy(); openDropdown = nil end end
+
+local function newDropdown(parent, opts)
+    local dd = { _items = opts.items, _value = opts.default or opts.items[1] }
+    local row = make("TextButton", { Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, Text = "", AutoButtonColor = false }, parent)
+    label(row, opts.name, UDim2.fromOffset(0, 0), UDim2.new(0.5, 0, 1, 0), col.dim)
+    local valueLabel = label(row, tostring(dd._value), UDim2.new(0.5, 0, 0, 0), UDim2.new(0.5, -14, 1, 0), col.text, Enum.TextXAlignment.Right)
+    label(row, "v", UDim2.new(1, -12, 0, 0), UDim2.fromOffset(12, 22), col.dim)
+    local function refresh() valueLabel.Text = (dd._value == "" and "(None)") or tostring(dd._value) end
+    refresh()
+    row.MouseButton1Click:Connect(function()
+        closeDropdown()
+        local bp, bs = row.AbsolutePosition, row.AbsoluteSize
+        local frame = make("Frame", { Position = UDim2.fromOffset(bp.X, bp.Y + bs.Y), Size = UDim2.fromOffset(bs.X, math.min(#dd._items * 20 + 4, 220)), BackgroundColor3 = col.box, BorderSizePixel = 0, ZIndex = 5 }, ddGui)
+        outline(frame, col.boxLine)
+        local scroll = make("ScrollingFrame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, CanvasSize = UDim2.new(0, 0, 0, #dd._items * 20) }, frame)
+        make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }, scroll)
+        for _, opt in ipairs(dd._items) do
+            local ib = make("TextButton", { Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1, Text = (opt == "" and "(None)") or tostring(opt), Font = font, TextSize = fsize, TextColor3 = (opt == dd._value) and col.accent or col.text, TextXAlignment = Enum.TextXAlignment.Left, AutoButtonColor = false }, scroll)
+            make("UIPadding", { PaddingLeft = UDim.new(0, 6) }, ib)
+            ib.MouseButton1Click:Connect(function() dd._value = opt; refresh(); closeDropdown(); if opts.callback then pcall(opts.callback, opt) end end)
+            ib.MouseEnter:Connect(function() ib.TextColor3 = col.accent end)
+            ib.MouseLeave:Connect(function() if opt ~= dd._value then ib.TextColor3 = col.text end end)
+        end
+        openDropdown = frame
+    end)
+    function dd:SetItems(newItems) self._items = newItems; if not table.find(newItems, self._value) then self._value = newItems[1]; refresh() end end
+    return dd
+end
+
+UIS.InputBegan:Connect(function(i)
+    if not openDropdown then return end
+    if i.UserInputType ~= Enum.UserInputType.MouseButton1 and i.UserInputType ~= Enum.UserInputType.Touch then return end
+    local m = UIS:GetMouseLocation()
+    local p, s = openDropdown.AbsolutePosition, openDropdown.AbsoluteSize
+    if m.X < p.X or m.X > p.X + s.X or m.Y < p.Y or m.Y > p.Y + s.Y then closeDropdown() end
+end)
+
+local function newKeybind(parent, opts)
+    local row = make("TextButton", { Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, Text = "", AutoButtonColor = false }, parent)
+    label(row, opts.name or "Keybind", UDim2.fromOffset(0, 0), UDim2.new(0.6, 0, 1, 0), col.dim)
+    local valueLabel = label(row, "None", UDim2.new(0.6, 0, 0, 0), UDim2.new(0.4, -8, 1, 0), col.text, Enum.TextXAlignment.Right)
+    local listening, active = false, false
+    row.MouseButton1Click:Connect(function() listening = true; valueLabel.Text = "Press..." end)
+    UIS.InputBegan:Connect(function(i, gp)
+        if not listening or gp then return end
+        listening = false
+        valueLabel.Text = i.KeyCode.Name
+        active = not active
+        if opts.callback then pcall(opts.callback, active) end
+    end)
+    return row
+end
+
+local function createPanel(tabContent, title)
+    local panel = make("Frame", { BackgroundColor3 = col.panel, BorderSizePixel = 0, ClipsDescendants = true }, tabContent)
+    outline(panel, col.panelLine)
+    local top = make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = Color3.fromRGB(225, 232, 242), BorderSizePixel = 0 }, panel)
+    make("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }) }, top)
+    label(panel, title, UDim2.fromOffset(9, 8), UDim2.new(1, -18, 0, 16))
+    local scroll = make("ScrollingFrame", { Position = UDim2.fromOffset(9, 28), Size = UDim2.new(1, -18, 1, -34), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = col.tabLineOn, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y }, panel)
+    make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2) }, scroll)
+    return scroll
+end
+
+local function makeSection(scroll)
+    local sec = {}
+    function sec:toggle(o)  return newToggle(scroll, { name = o.name, default = o.default, callback = o.callback }) end
+    function sec:slider(o)  return newSlider(scroll, { name = o.name, min = o.min, max = o.max, step = o.interval or 1, default = o.default, suffix = o.suffix, callback = o.callback }) end
+    function sec:dropdown(o) return newDropdown(scroll, { name = o.name, items = o.items, default = o.default, callback = o.callback }) end
+    function sec:button(o)  return newButton(scroll, { name = o.name, callback = o.callback }) end
+    function sec:keybind(o) return newKeybind(scroll, { name = o.name, callback = o.callback }) end
+    function sec:label(o)   return label(scroll, o.name or "", UDim2.new(), UDim2.new(1, 0, 0, 16), col.dim) end
+    function sec:settings()  return makeSection(scroll) end
+    return sec
+end
+
+local function makeColumn(tabContent)
+    local c = {}
+    function c:section(opts)
+        local scroll = createPanel(tabContent, opts.name)
+        return makeSection(scroll)
+    end
+    return c
+end
+
+local PRESET_COLORS = { Red = Color3.fromRGB(255, 60, 60), Green = Color3.fromRGB(60, 255, 60), Blue = Color3.fromRGB(60, 120, 255), White = Color3.fromRGB(255, 255, 255), Cyan = Color3.fromRGB(60, 255, 255), Magenta = Color3.fromRGB(255, 60, 255), Yellow = Color3.fromRGB(255, 255, 60), Orange = Color3.fromRGB(255, 150, 60), Purple = Color3.fromRGB(180, 60, 255), Pink = Color3.fromRGB(255, 150, 200), Accent = Color3.fromRGB(150, 195, 235) }
+local PRESET_KEYS = {} for k in pairs(PRESET_COLORS) do PRESET_KEYS[#PRESET_KEYS+1] = k end table.sort(PRESET_KEYS)
+
+local espGui = make("ScreenGui", { Name = "PetESP", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 5, ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, Players.LocalPlayer:WaitForChild("PlayerGui"))
+local esp = { enabled = false, teamCheck = true, maxDist = 1000, box = true, name = true, health = true, dist = true, tracer = true, boxColor = PRESET_COLORS.Red, nameColor = PRESET_COLORS.White, healthColor = PRESET_COLORS.Green, tracerColor = PRESET_COLORS.Accent }
+local espFrames = {}
+
+local function createESPFrame()
+    local frame = make("Frame", { BackgroundTransparency = 1, BorderSizePixel = 0, Visible = false }, espGui)
+    local stroke = make("UIStroke", { Color = esp.boxColor, Thickness = 1 }, frame)
+    local nameLabel = make("TextLabel", { BackgroundTransparency = 1, Font = font, TextSize = 13, TextColor3 = esp.nameColor, TextStrokeTransparency = 0.5, TextStrokeColor3 = Color3.new(0, 0, 0), Size = UDim2.new(1, 60, 0, 14), Position = UDim2.new(0.5, -30, 0, -16), TextXAlignment = Enum.TextXAlignment.Center }, frame)
+    local distLabel = make("TextLabel", { BackgroundTransparency = 1, Font = font, TextSize = 12, TextColor3 = Color3.fromRGB(200, 200, 200), TextStrokeTransparency = 0.5, TextStrokeColor3 = Color3.new(0, 0, 0), Size = UDim2.new(1, 60, 0, 12), Position = UDim2.new(0.5, -30, 1, 2), TextXAlignment = Enum.TextXAlignment.Center }, frame)
+    local healthBg = make("Frame", { BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, Size = UDim2.new(0, 3, 1, 0), Position = UDim2.new(0, -6, 0, 0) }, frame)
+    local healthFill = make("Frame", { BackgroundColor3 = esp.healthColor, BorderSizePixel = 0, Size = UDim2.new(1, 0, 1, 0) }, healthBg)
+    local tracer = make("Frame", { BackgroundColor3 = esp.tracerColor, BorderSizePixel = 0, Size = UDim2.new(0, 1, 0, 1), Visible = false }, espGui)
+    return { frame = frame, stroke = stroke, nameLabel = nameLabel, distLabel = distLabel, healthBg = healthBg, healthFill = healthFill, tracer = tracer }
+end
+
+local espAccum = 0
+RunSvc.RenderStepped:Connect(function(dt)
+    if not esp.enabled then
+        for _, f in pairs(espFrames) do
+            if f.frame.Visible or f.tracer.Visible then
+                f.frame.Visible = false
+                f.tracer.Visible = false
+            end
+        end
+        return
+    end
+    espAccum = espAccum + dt
+    if espAccum < 0.03 then return end
+    espAccum = 0
+    local myChar = LP.Character
+    local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
+    local vp = cam.ViewportSize
+    local ox, oy = vp.X / 2, vp.Y
+    for _, plr in ipairs(Players:GetPlayers()) do
+        local f = espFrames[plr] or createESPFrame()
+        espFrames[plr] = f
+        local char = plr.Character
+        local hum  = char and char:FindFirstChildOfClass("Humanoid")
+        local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+        local head = char and char:FindFirstChild("Head")
+        local visible = plr ~= LP and hrp and head and hum and hum.Health > 0
+        if visible and esp.teamCheck and plr.Team ~= nil and plr.Team == LP.Team then visible = false end
+        local dist = visible and (hrp.Position - myHRP.Position).Magnitude or 0
+        if visible and dist > esp.maxDist then visible = false end
+        if not visible then
+            f.frame.Visible = false; f.tracer.Visible = false
+        else
+            local headPos, hOn = cam:WorldToViewportPoint(head.Position + Vector3.new(0, 1, 0))
+            local footPos, fOn = cam:WorldToViewportPoint(hrp.Position - Vector3.new(0, 3, 0))
+            if not hOn or not fOn then
+                f.frame.Visible = false; f.tracer.Visible = false
+            else
+                local top, bot = headPos.Y, footPos.Y
+                local h = bot - top
+                local w = h * 0.55
+                local cx = (headPos.X + footPos.X) / 2
+                f.frame.Position = UDim2.fromOffset(cx - w/2, top)
+                f.frame.Size     = UDim2.fromOffset(w, h)
+                f.frame.Visible  = esp.box
+                f.stroke.Color   = esp.boxColor
+                f.nameLabel.Visible    = esp.name
+                f.nameLabel.Text       = (plr.DisplayName ~= plr.Name) and plr.DisplayName or plr.Name
+                f.nameLabel.TextColor3 = esp.nameColor
+                f.distLabel.Visible    = esp.dist
+                f.distLabel.Text       = string.format("%d studs", math.floor(dist))
+                f.healthBg.Visible     = esp.health
+                local frac = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
+                f.healthFill.Size = UDim2.new(1, 0, frac, 0)
+                f.healthFill.Position = UDim2.new(0, 0, 1 - frac, 0)
+                f.healthFill.BackgroundColor3 = esp.healthColor
+                if esp.tracer then
+                    f.tracer.Visible = true
+                    local x1, y1 = ox, oy
+                    local x2, y2 = cx, bot
+                    local dx, dy = x2 - x1, y2 - y1
+                    local len = math.sqrt(dx*dx + dy*dy)
+                    f.tracer.Size = UDim2.fromOffset(len, 1)
+                    f.tracer.AnchorPoint = Vector2.new(0.5, 0.5)
+                    f.tracer.Position = UDim2.fromOffset((x1 + x2)/2, (y1 + y2)/2)
+                    f.tracer.Rotation = math.deg(math.atan2(dy, dx))
+                    f.tracer.BackgroundColor3 = esp.tracerColor
+                else
+                    f.tracer.Visible = false
+                end
+            end
+        end
+    end
+    for plr, f in pairs(espFrames) do
+        if not plr.Parent then f.frame:Destroy(); f.tracer:Destroy(); espFrames[plr] = nil end
+    end
+end)
+
+local chams = { enabled = false, teamCheck = true, fillColor = Color3.fromRGB(150, 60, 60), outlineColor = Color3.new(1, 1, 1), fillTransparency = 0.5 }
+local chamsHighlights = {}
+RunSvc.Heartbeat:Connect(function()
+    if not chams.enabled then
+        for _, h in pairs(chamsHighlights) do pcall(function() h:Destroy() end) end
+        chamsHighlights = {}
+        return
+    end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        local char = plr.Character
+        local isEnemy = plr ~= LP and char and (not chams.teamCheck or plr.Team == nil or plr.Team ~= LP.Team)
+        if isEnemy then
+            local h = chamsHighlights[plr]
+            if not h or h.Parent ~= char or h.Adornee ~= char then
+                if h then h:Destroy() end
+                h = Instance.new("Highlight", char)
+                h.Adornee = char
+                chamsHighlights[plr] = h
+            end
+            h.FillColor = chams.fillColor
+            h.OutlineColor = chams.outlineColor
+            h.FillTransparency = chams.fillTransparency
+            h.OutlineTransparency = 0
+        else
+            local h = chamsHighlights[plr]
+            if h then h:Destroy(); chamsHighlights[plr] = nil end
+        end
+    end
+    for plr, h in pairs(chamsHighlights) do
+        if not plr.Parent or not plr.Character then h:Destroy(); chamsHighlights[plr] = nil end
+    end
+end)
+
+local tabs = {
+    { name = "Graviton", content = nil }, { name = "Underground", content = nil }, { name = "Ragebot", content = nil },
+    { name = "Evasion", content = nil }, { name = "Void", content = nil }, { name = "Patterns", content = nil },
+    { name = "Visuals", content = nil }, { name = "Combat", content = nil }, { name = "Orbit", content = nil },
+}
+
+local tabBar = make("Frame", { Position = UDim2.fromOffset(9, 33), Size = UDim2.fromOffset(622, 42), BackgroundTransparency = 1 }, main)
+local buttons, current = {}, 1
+for i, t in ipairs(tabs) do
+    local c = make("ScrollingFrame", { Position = UDim2.fromOffset(9, 96), Size = UDim2.fromOffset(622, 440), BackgroundTransparency = 1, Visible = (i == 1), ScrollBarThickness = 4, ScrollBarImageColor3 = col.tabLineOn, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y }, main)
+    t.content = c
+    make("UIGridLayout", { CellSize = UDim2.fromOffset(306, 215), CellPadding = UDim2.fromOffset(10, 10), SortOrder = Enum.SortOrder.LayoutOrder }, c)
+
+    local b = make("TextButton", { Position = UDim2.fromScale((i - 1) / #tabs, 0), Size = UDim2.fromScale(1 / #tabs, 1), BorderSizePixel = 0, AutoButtonColor = false, Text = t.name, Font = font, TextSize = fsize, TextTruncate = Enum.TextTruncate.AtEnd }, tabBar)
+    buttons[i] = { btn = b, line = outline(b, col.tabLine) }
+    b.MouseButton1Click:Connect(function()
+        current = i
+        for j, bb in ipairs(buttons) do
+            local on = j == i
+            bb.btn.BackgroundColor3 = on and col.tabOn or col.tab
+            bb.btn.TextColor3      = on and col.accent or col.dim
+            bb.line.Color          = on and col.tabLineOn or col.tabLine
+        end
+        for j, tt in ipairs(tabs) do tt.content.Visible = (j == i) end
+    end)
+    b.MouseEnter:Connect(function() if current ~= i then b.TextColor3 = col.text end end)
+    b.MouseLeave:Connect(function() if current ~= i then b.TextColor3 = col.dim end end)
+end
+
+local foot = make("Frame", { Position = UDim2.fromOffset(9, 552), Size = UDim2.fromOffset(622, 26), BackgroundColor3 = col.panel, BorderSizePixel = 0 }, main)
+outline(foot, col.panelLine)
+label(foot, "welcome back", UDim2.fromOffset(8, 0), UDim2.new(0.6, 0, 1, 0), col.off)
+label(foot, "[ ULTIMATE COMBAT ]", UDim2.new(0.4, -8, 0, 0), UDim2.new(0.6, 0, 1, 0), col.off, Enum.TextXAlignment.Right)
+
+local minimized = false
+minBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        main.Size = UDim2.fromOffset(640, 32); minBtn.Text = "+"; tabBar.Visible = false; foot.Visible = false
+        for _, tt in ipairs(tabs) do tt.content.Visible = false end
+    else
+        main.Size = UDim2.fromOffset(640, 590); minBtn.Text = "-"; tabBar.Visible = true; foot.Visible = true
+        for j, tt in ipairs(tabs) do tt.content.Visible = (j == current) end
+    end
+end)
+local combat = {
+    aim_enabled = false, aim_key = false, aim_fov = 120, aim_smooth = 0.5,
+    aim_team = true, aim_wall = false, aim_part = "Head", aim_show_fov = true,
+    aim_sticky = false, aim_target = nil, aim_prediction = 0.15,
+    silent_enabled = false, silent_fov = 150, silent_team = true, silent_wall = false,
+    silent_part = "Head", silent_show_fov = false, silent_target = nil,
+    trigger_enabled = false, trigger_fov = 20, trigger_delay = 0.1, trigger_last = 0,
+    auto_shoot = false, auto_shoot_delay = 0.1, auto_shoot_last = 0,
+    hitbox_enabled = false, hitbox_size = 5, hitbox_trans = 0.5, hitbox_team = true,
+    hitbox_original = {},
+    cross_enabled = false, cross_color = Color3.new(1, 1, 1), cross_gap = 4, cross_thick = 1, cross_len = 6,
+}
+
+local function updateCrosshair()
+    crossCenter.Visible = combat.cross_enabled
+    if not combat.cross_enabled then return end
+    cLines[1].BackgroundColor3 = combat.cross_color; cLines[1].Size = UDim2.fromOffset(combat.cross_thick, combat.cross_len); cLines[1].Position = UDim2.fromOffset(-combat.cross_thick/2, -combat.cross_gap - combat.cross_len)
+    cLines[2].BackgroundColor3 = combat.cross_color; cLines[2].Size = UDim2.fromOffset(combat.cross_thick, combat.cross_len); cLines[2].Position = UDim2.fromOffset(-combat.cross_thick/2, combat.cross_gap)
+    cLines[3].BackgroundColor3 = combat.cross_color; cLines[3].Size = UDim2.fromOffset(combat.cross_len, combat.cross_thick); cLines[3].Position = UDim2.fromOffset(-combat.cross_gap - combat.cross_len, -combat.cross_thick/2)
+    cLines[4].BackgroundColor3 = combat.cross_color; cLines[4].Size = UDim2.fromOffset(combat.cross_len, combat.cross_thick); cLines[4].Position = UDim2.fromOffset(combat.cross_gap, -combat.cross_thick/2)
+end
+
+local function safeClick()
+    pcall(function()
+        local vim = game:GetService("VirtualInputManager")
+        if vim then
+            local pos = UIS:GetMouseLocation()
+            vim:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 0)
+            task.wait(0.01)
+            vim:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 0)
+        end
+    end)
+end
+
+local function getTarget(fov, partName, teamCheck, wallCheck)
+    local closest, shortest = nil, fov
+    local mouse = UIS:GetMouseLocation()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character then
+            local hum = p.Character:FindFirstChild("Humanoid")
+            if hum and hum.Health > 0 then
+                local skip = false
+                if teamCheck and p.Team == LP.Team then skip = true end
+                if not skip then
+                    local part = p.Character:FindFirstChild(partName) or p.Character:FindFirstChild("HumanoidRootPart")
+                    if part then
+                        local screenPos, onScreen = cam:WorldToViewportPoint(part.Position)
+                        if onScreen then
+                            local dist = (Vector2.new(screenPos.X, screenPos.Y) - mouse).Magnitude
+                            if dist < shortest then
+                                if wallCheck then
+                                    local ray = Ray.new(cam.CFrame.Position, part.Position - cam.CFrame.Position)
+                                    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LP.Character, p.Character})
+                                    if not hit then
+                                        shortest = dist
+                                        closest = { player = p, part = part, hum = hum }
+                                    end
+                                else
+                                    shortest = dist
+                                    closest = { player = p, part = part, hum = hum }
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+local cachedSilentTarget = nil
+RunSvc.RenderStepped:Connect(function()
+    if combat.silent_enabled then
+        cachedSilentTarget = getTarget(combat.silent_fov, combat.silent_part, combat.silent_team, combat.silent_wall)
+    end
+end)
+
+RunSvc.RenderStepped:Connect(function(dt)
+    if combat.aim_show_fov and (combat.aim_enabled or combat.aim_key) then
+        fovFrameAimbot.Visible = true; fovFrameAimbot.Size = UDim2.fromOffset(combat.aim_fov * 2, combat.aim_fov * 2)
+    else fovFrameAimbot.Visible = false end
+    if combat.silent_show_fov and combat.silent_enabled then
+        fovFrameSilent.Visible = true; fovFrameSilent.Size = UDim2.fromOffset(combat.silent_fov * 2, combat.silent_fov * 2)
+    else fovFrameSilent.Visible = false end
+
+    updateCrosshair()
+
+    if combat.aim_enabled or combat.aim_key then
+        if not combat.aim_sticky or not combat.aim_target or not combat.aim_target.part.Parent or combat.aim_target.hum.Health <= 0 then
+            combat.aim_target = getTarget(combat.aim_fov, combat.aim_part, combat.aim_team, combat.aim_wall)
+        end
+        if combat.aim_target and combat.aim_target.part then
+            local targetPos = combat.aim_target.part.Position
+            if combat.aim_prediction > 0 then
+                targetPos = targetPos + (combat.aim_target.part.AssemblyLinearVelocity * combat.aim_prediction)
+            end
+            local targetCF = CFrame.lookAt(cam.CFrame.Position, targetPos)
+            cam.CFrame = cam.CFrame:Lerp(targetCF, combat.aim_smooth)
+        end
+    end
+
+    if combat.auto_shoot and tick() - combat.auto_shoot_last > combat.auto_shoot_delay then
+        local t = getTarget(combat.aim_fov, combat.aim_part, combat.aim_team, false)
+        if t then
+            combat.auto_shoot_last = tick()
+            safeClick()
+        end
+    end
+end)
+
+RunSvc.Heartbeat:Connect(function()
+    if not combat.trigger_enabled then return end
+    local t = getTarget(combat.trigger_fov, combat.aim_part, combat.aim_team, false)
+    if t and tick() - combat.trigger_last > combat.trigger_delay then
+        combat.trigger_last = tick()
+        safeClick()
+    end
+end)
+
+pcall(function()
+    if getgenv and hookmetamethod then
+        local oldIndex
+        oldIndex = hookmetamethod(game, "__index", function(self, key)
+            if not checkcaller() and combat.silent_enabled then
+                if self == LP:GetMouse() or self == cam then
+                    if key == "Hit" or key == "Target" then
+                        if cachedSilentTarget and cachedSilentTarget.part then
+                            if key == "Hit" then return CFrame.lookAt(cam.CFrame.Position, cachedSilentTarget.part.Position)
+                            elseif key == "Target" then return cachedSilentTarget.part end
+                        end
+                    end
+                end
+            end
+            return oldIndex(self, key)
+        end)
+    end
+end)
+
+RunSvc.Heartbeat:Connect(function()
+    if not combat.hitbox_enabled then
+        for p, parts in pairs(combat.hitbox_original) do
+            for partName, origSize in pairs(parts) do
+                local part = p.Character and p.Character:FindFirstChild(partName)
+                if part then pcall(function() part.Size = origSize; part.Transparency = 0 end) end
+            end
+        end
+        combat.hitbox_original = {}
+        return
+    end
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character and (not combat.hitbox_team or p.Team ~= LP.Team) then
+            combat.hitbox_original[p] = combat.hitbox_original[p] or {}
+            for _, partName in ipairs({"Head"}) do
+                local part = p.Character:FindFirstChild(partName)
+                if part then
+                    if not combat.hitbox_original[p][partName] then
+                        combat.hitbox_original[p][partName] = part.Size
+                    end
+                    if part.Size ~= Vector3.new(combat.hitbox_size, combat.hitbox_size, combat.hitbox_size) then
+                        pcall(function()
+                            part.Size = Vector3.new(combat.hitbox_size, combat.hitbox_size, combat.hitbox_size)
+                            part.Transparency = combat.hitbox_trans
+                            part.CanCollide = false
+                        end)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+do
+    local colC = makeColumn(tabs[8].content)
+
+    local aimSec = colC:section({ name = "Aimbot" })
+    aimSec:toggle({ name = "Enable Aimbot", default = false, callback = function(v) combat.aim_enabled = v end })
+    aimSec:keybind({ name = "Aim Key (Toggle)", callback = function(v) combat.aim_key = v end })
+    aimSec:slider({ name = "FOV", min = 10, max = 500, interval = 1, default = 120, callback = function(v) combat.aim_fov = v end })
+    aimSec:slider({ name = "Smoothness", min = 0.01, max = 1, interval = 0.01, default = 0.5, callback = function(v) combat.aim_smooth = v end })
+    aimSec:slider({ name = "Prediction", min = 0, max = 1, interval = 0.01, default = 0.15, callback = function(v) combat.aim_prediction = v end })
+    aimSec:toggle({ name = "Team Check", default = true, callback = function(v) combat.aim_team = v end })
+    aimSec:toggle({ name = "Wall Check", default = false, callback = function(v) combat.aim_wall = v end })
+    aimSec:toggle({ name = "Sticky Aim", default = false, callback = function(v) combat.aim_sticky = v end })
+    aimSec:toggle({ name = "Show FOV Circle", default = true, callback = function(v) combat.aim_show_fov = v end })
+    aimSec:dropdown({ name = "Target Part", items = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"}, default = "Head", callback = function(v) combat.aim_part = v end })
+
+    local silentSec = colC:section({ name = "Silent Aim" })
+    silentSec:toggle({ name = "Enable Silent Aim", default = false, callback = function(v) combat.silent_enabled = v end })
+    silentSec:slider({ name = "FOV", min = 10, max = 500, interval = 1, default = 150, callback = function(v) combat.silent_fov = v end })
+    silentSec:toggle({ name = "Team Check", default = true, callback = function(v) combat.silent_team = v end })
+    silentSec:toggle({ name = "Wall Check", default = false, callback = function(v) combat.silent_wall = v end })
+    silentSec:toggle({ name = "Show FOV Circle", default = false, callback = function(v) combat.silent_show_fov = v end })
+    silentSec:dropdown({ name = "Target Part", items = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"}, default = "Head", callback = function(v) combat.silent_part = v end })
+
+    local triggerSec = colC:section({ name = "Triggerbot / AutoShoot" })
+    triggerSec:toggle({ name = "Enable Triggerbot", default = false, callback = function(v) combat.trigger_enabled = v end })
+    triggerSec:slider({ name = "Trigger FOV", min = 5, max = 100, interval = 1, default = 20, callback = function(v) combat.trigger_fov = v end })
+    triggerSec:slider({ name = "Trigger Delay", min = 0.01, max = 1, interval = 0.01, default = 0.1, callback = function(v) combat.trigger_delay = v end })
+    triggerSec:toggle({ name = "Enable Auto Shoot", default = false, callback = function(v) combat.auto_shoot = v end })
+    triggerSec:slider({ name = "Auto Shoot Delay", min = 0.01, max = 1, interval = 0.01, default = 0.1, callback = function(v) combat.auto_shoot_delay = v end })
+
+    local hbSec = colC:section({ name = "Hitbox Expander" })
+    hbSec:toggle({ name = "Enable Hitbox Expander", default = false, callback = function(v) combat.hitbox_enabled = v end })
+    hbSec:slider({ name = "Hitbox Size", min = 1, max = 20, interval = 0.5, default = 5, callback = function(v) combat.hitbox_size = v end })
+    hbSec:slider({ name = "Transparency", min = 0, max = 1, interval = 0.1, default = 0.5, callback = function(v) combat.hitbox_trans = v end })
+    hbSec:toggle({ name = "Team Check", default = true, callback = function(v) combat.hitbox_team = v end })
+
+    local crossSec = colC:section({ name = "Crosshair" })
+    crossSec:toggle({ name = "Enable Crosshair", default = false, callback = function(v) combat.cross_enabled = v end })
+    crossSec:slider({ name = "Gap", min = 0, max = 20, interval = 1, default = 4, callback = function(v) combat.cross_gap = v end })
+    crossSec:slider({ name = "Thickness", min = 1, max = 5, interval = 1, default = 1, callback = function(v) combat.cross_thick = v end })
+    crossSec:slider({ name = "Length", min = 1, max = 20, interval = 1, default = 6, callback = function(v) combat.cross_len = v end })
+    crossSec:dropdown({ name = "Color", items = PRESET_KEYS, default = "White", callback = function(v) combat.cross_color = PRESET_COLORS[v] end })
+end
+
+-- ============================================================
+-- 1. GRAVITON RAGE (Expanded)
+-- ============================================================
+do
+    local col1 = makeColumn(tabs[1].content)
+    xpcall(function()
+        local Players = game:GetService('Players')
+        local RunService = game:GetService('RunService')
+        local UIS = game:GetService('UserInputService')
+        local RS_ = game:GetService('ReplicatedStorage')
+        local LP = Players.LocalPlayer
+        local GR = { on = false, rate = 0.001, slot = 1, desync = true, void = true, head = true, extra = true, knife = true, equip = true, fov = 9999 }
+        local _FC, _SC, _util, _enum, _remote = false, false, false, false, false
+        local alive = true
+        task.spawn(function()
+            for _ = 1, 60 do
+                if not alive then return end
+                pcall(function()
+                    if not _util then _util = require(RS_.Modules.Utility) or false end
+                    if not _enum then _enum = require(RS_.Modules.EnumLibrary) or false end
+                    if not _FC   then _FC = require(LP.PlayerScripts.Controllers.FighterController) or false end
+                    if not _SC   then _SC = require(LP.PlayerScripts.Controllers:WaitForChild('SpectateController', 3)) or false end
+                    if not _remote then _remote = RS_.Remotes.Replication.Fighter.UseItem end
+                end)
+                if _util and _enum and _FC and _SC and _remote then break end
+                task.wait(0.5)
+            end
+        end)
+        local K0, K1, K2, K3 = utf8.char(0), utf8.char(1), utf8.char(2), utf8.char(3)
+        local EYE = Vector3.new(0, 1.5, 0)
+        local hb, equipLoop = nil, nil
+
+        local function startEquip()
+            if equipLoop then return end
+            equipLoop = task.spawn(function()
+                while GR.on and alive do
+                    if _FC and _FC.LocalFighter then pcall(function() _FC.LocalFighter:EquipItem(GR.slot) end) end
+                    task.wait(1)
+                end
+                equipLoop = nil
+            end)
+        end
+
+        local deflecting, deflectAt = {}, 0
+        Players.PlayerRemoving:Connect(function(p) deflecting[p] = nil end)
+        local function updateDeflection()
+            local now = os.clock()
+            if now - deflectAt < 0.1 then return end
+            deflectAt = now
+            if not _FC or not _FC.Objects then return end
+            for _, fo in _FC.Objects do
+                local pl = fo.Player
+                if pl then
+                    local entity = fo.Entity
+                    if not entity or not entity:IsAlive() then
+                        deflecting[pl] = false
+                    else
+                        local eq = fo.EquippedItem
+                        local vm = eq and eq.ViewModel
+                        local d = false
+                        if vm and vm.Name == 'Katana' then
+                            d = (eq._attack_cooldown and eq._attack_cooldown > tick()) or false
+                        end
+                        deflecting[pl] = d
+                    end
+                end
+            end
+        end
+
+        local IMMUNE = { 'IsInvincible', 'Immune', 'IsImmune', 'SpawnProtection' }
+        local function isImmune(pl)
+            local ch = pl.Character
+            if ch then
+                if ch:FindFirstChildOfClass('ForceField') then return true end
+                for _, a in ipairs(IMMUNE) do if ch:GetAttribute(a) == true then return true end end
+            end
+            for _, a in ipairs(IMMUNE) do if pl:GetAttribute(a) == true then return true end end
+            return false
+        end
+        local function isEnemy(pl)
+            if pl == LP then return false end
+            if _SC then
+                local ok, res = pcall(function()
+                    local duel = _SC.CurrentDuelSubject
+                    local ld = duel and duel:GetDueler(LP)
+                    local lt = ld and ld:Get('TeamID')
+                    if lt and duel and duel.Duelers then
+                        for _, d in duel.Duelers do if d.Player == pl then return d:Get('TeamID') ~= lt end end
+                    end
+                    return nil
+                end)
+                if ok and res ~= nil then return res end
+            end
+            local pt, lt = pl:GetAttribute('TeamID'), LP:GetAttribute('TeamID')
+            if pt and lt then return pt ~= lt end
+            return true
+        end
+        local function inFov(hrp)
+            if GR.fov >= 9999 then return true end
+            local cam = workspace.CurrentCamera
+            local p3, on = cam:WorldToViewportPoint(hrp.Position)
+            if not on then return false end
+            return (Vector2.new(p3.X, p3.Y) - UIS:GetMouseLocation()).Magnitude <= GR.fov
+        end
+        local function hasKnifeVM(pl)
+            local vm = workspace:FindFirstChild('ViewModels')
+            if not vm then return false end
+            for _, m in ipairs(vm:GetChildren()) do
+                if m:IsA('Model') and string.find(m.Name, pl.Name, 1, true) and string.find(m.Name, 'Knife', 1, true) then return true end
+            end
+            return false
+        end
+        local ping, pingAt = 0.06, 0
+        local function leadPos(hrp)
+            if not GR.extra then return hrp.Position end
+            local now = os.clock()
+            if now - pingAt >= 1 then pingAt = now; pcall(function() ping = math.clamp(LP:GetNetworkPing(), 0, 0.5) end) end
+            local vel = Vector3.zero
+            pcall(function() vel = hrp.AssemblyLinearVelocity end)
+            if vel.Magnitude < 0.05 then return hrp.Position end
+            local look = (ping * 1.2 + 0.016) * (1 + math.clamp(vel.Magnitude / 40, 0, 1.6) * 0.4)
+            return hrp.Position + vel * math.clamp(look, 0, 0.5)
+        end
+        local function hitbox(ch, head, body)
+            local h = ch and ch:FindFirstChild(body and 'HitboxBody' or 'HitboxHead')
+            if h and h:IsA('BasePart') then return h end
+            return body and (ch:FindFirstChild('HumanoidRootPart') or head) or head
+        end
+        local pelItem, pelCount = nil, 1
+        local function pellets(item)
+            if item == pelItem then return pelCount end
+            pelItem, pelCount = item, 1
+            pcall(function() local n = item.Info and item.Info.ShootPellets; if type(n) == 'number' then pelCount = math.max(1, math.floor(n)) end end)
+            return pelCount
+        end
+        local cdItem, cdVal = nil, 0
+        local function cooldown(item)
+            if item == cdItem then return cdVal end
+            cdItem, cdVal = item, 0
+            pcall(function()
+                local info = item.Info
+                if type(info) ~= 'table' then return end
+                local cd = tonumber(info.ShootCooldown) or 0
+                local burst = tonumber(info.BurstCount) or 1
+                local bcd = tonumber(info.BurstCooldown)
+                if burst > 1 and bcd then cd = math.min(cd, bcd) end
+                cdVal = math.clamp(cd, 0, 5)
+            end)
+            return cdVal
+        end
+
+        local dsRoot, dsCF, dsVel, dsRot, dsBound, dsShown = nil, nil, Vector3.zero, Vector3.zero, false, nil
+        local function flush()
+            if dsBound then dsBound = false; pcall(function() RunService:UnbindFromRenderStep('GR_DsRestore') end) end
+            local root, cf = dsRoot, dsCF
+            dsRoot, dsCF, dsShown = nil, nil, nil
+            if root and root.Parent and cf then
+                pcall(function() root.CFrame = cf; root.AssemblyLinearVelocity = dsVel; root.AssemblyAngularVelocity = dsRot end)
+            end
+        end
+        pcall(function()
+            local pre = RunService.PreSimulation
+            if typeof(pre) == 'RBXScriptSignal' then pre:Connect(function() if dsBound or dsCF then flush() end end) end
+        end)
+        local function apply(cf)
+            local ch = LP.Character
+            local root = ch and ch:FindFirstChild('HumanoidRootPart')
+            if not root or not root:IsA('BasePart') then return false end
+            local keep = dsCF ~= nil and (dsBound or (dsShown and (root.Position - dsShown.Position).Magnitude < 0.2))
+            if not keep or dsRoot ~= root then dsRoot, dsCF, dsVel, dsRot = root, root.CFrame, root.AssemblyLinearVelocity, root.AssemblyAngularVelocity end
+            root.CFrame = cf
+            dsShown = cf
+            if not dsBound then dsBound = true; RunService:BindToRenderStep('GR_DsRestore', Enum.RenderPriority.Camera.Value - 1, flush) end
+            return true
+        end
+        local function voidCF()
+            local u, v = math.random(), math.random()
+            local th, ph = math.pi * 2 * u, math.acos(math.clamp(2 * v - 1, -1, 1))
+            local R = 9000
+            return CFrame.lookAt(Vector3.new(R * math.sin(ph) * math.cos(th), R * math.cos(ph), R * math.sin(ph) * math.sin(th)), Vector3.zero)
+        end
+        local function pickTarget()
+            local myChar = LP.Character
+            local myHRP = myChar and myChar:FindFirstChild('HumanoidRootPart')
+            if not myHRP then return end
+            local bp, bh, bhd, bd = nil, nil, nil, math.huge
+            for _, pl in ipairs(Players:GetPlayers()) do
+                if isEnemy(pl) and not isImmune(pl) then
+                    local ch = pl.Character
+                    local hrp = ch and ch:FindFirstChild('HumanoidRootPart')
+                    local head = ch and ch:FindFirstChild('Head')
+                    local hum = ch and ch:FindFirstChildOfClass('Humanoid')
+                    if hrp and head and hum and hum.Health > 0 and inFov(hrp) then
+                        local d = (myHRP.Position - hrp.Position).Magnitude
+                        if d < bd then bp, bh, bhd, bd = pl, hrp, head, d end
+                    end
+                end
+            end
+            return bp, bh, bhd
+        end
+        local function fire(pl, hrp, head)
+            if not (_util and _enum and _FC and _remote) then return end
+            if not _FC.LocalFighter then return end
+            local item = _FC.LocalFighter.EquippedItem
+            if not item then return end
+            local objectId; pcall(function() objectId = item:Get('ObjectID') end)
+            if not objectId then return end
+            local ch = hrp and hrp.Parent; if not (ch and head) then return end
+            local hum = ch:FindFirstChildOfClass('Humanoid'); if not hum or hum.Health <= 0 then return end
+            if GR.knife and deflecting[pl] then return end
+            local part = hitbox(ch, head, not GR.head); local aimPos = leadPos(hrp); local hitPoint = part.Position; local dcf
+            if hasKnifeVM(pl) then dcf = CFrame.lookAt(hrp.Position + Vector3.new(0, -5, 0), aimPos) else
+                local f = hrp.CFrame.LookVector; local flat = Vector3.new(f.X, 0, f.Z)
+                if flat.Magnitude < 0.05 then flat = Vector3.new(0, 0, -1) end
+                dcf = CFrame.lookAt(hrp.Position + flat.Unit + Vector3.new(0, 1, 0), aimPos)
+            end
+            if GR.desync then apply(dcf) end
+            local eye = dcf.Position + EYE
+            if (eye - aimPos).Magnitude < 0.1 then eye = aimPos + Vector3.new(0, 0.2, 0) end
+            local aimCF = CFrame.lookAt(eye, aimPos); local offset = part.CFrame:ToObjectSpace(CFrame.new(hitPoint)); local eAim, eOff
+            if not pcall(function() eAim = _util:EncodeCFrame(aimCF); eOff = _util:EncodeCFrame(offset) end) or not eAim then return end
+            local data = { [K1] = { [K0] = eAim, [K1] = eAim, [K2] = part, [K3] = eOff } }
+            if pellets(item) > 1 then data[K2] = true end
+            local en; pcall(function() en = _enum:ToEnum('StartShooting') end); if not en then return end
+            pcall(function() _remote:FireServer(objectId, en, data, nil) end)
+        end
+        local lastFire = 0
+        local function start()
+            if hb then hb:Disconnect(); hb = nil end
+            if GR.equip then startEquip() end
+            hb = RunService.Heartbeat:Connect(function()
+                if not GR.on then return end
+                updateDeflection()
+                local remaining = lastFire + GR.rate - tick()
+                if remaining > 0.002 then
+                    local item = _FC and _FC.LocalFighter and _FC.LocalFighter.EquippedItem
+                    local cd = item and cooldown(item) or 0
+                    if GR.void and cd > 0.05 then apply(voidCF()) end
+                    return
+                end
+                local pl, hrp, head = pickTarget()
+                if not pl then return end
+                lastFire = tick(); task.spawn(fire, pl, hrp, head)
+            end)
+        end
+        local function stop() GR.on = false; if hb then hb:Disconnect(); hb = nil end; flush() end
+
+        pcall(function()
+            local sec = col1:section({ name = "Graviton Rage" })
+            sec:toggle({ name = "Graviton ragebot", default = false, callback = function(v) GR.on = v; if v then start() else stop() end end })
+            pcall(function() sec:keybind({ name = "Graviton Rage toggle", callback = function(active) GR.on = active; if active then start() else stop() end end }) end)
+            sec:toggle({ name = "Desync origin",       default = true, callback = function(v) GR.desync = v end })
+            sec:toggle({ name = "Void park (shotgun)", default = true, callback = function(v) GR.void   = v end })
+            sec:toggle({ name = "Aim head",            default = true, callback = function(v) GR.head   = v end })
+            sec:toggle({ name = "Extrapolation",       default = true, callback = function(v) GR.extra  = v end })
+            sec:toggle({ name = "Knife deflect check", default = true, callback = function(v) GR.knife  = v end })
+            sec:toggle({ name = "Auto equip slot",     default = true, callback = function(v) GR.equip = v; if v and GR.on then startEquip() end end })
+            local sec2 = col1:section({ name = "Graviton Settings" })
+            sec2:slider({ name = "Fire rate (ms)", min = 1, max = 500, interval = 1, default = 1, suffix = " ms", callback = function(v) GR.rate = v / 1000 end })
+            sec2:slider({ name = "FOV", min = 0, max = 9999, interval = 1, default = 9999, suffix = " px", callback = function(v) GR.fov = v end })
+            sec2:dropdown({ name = "Weapon", items = { "Primary", "Secondary", "Melee" }, default = "Primary", callback = function(v) GR.slot = ({ Primary = 1, Secondary = 2, Melee = 3 })[v] or 1 end })
+        end)
+    end, function(e) warn('[Sniflva Graviton Rage] ' .. tostring(e)) end)
+end
+-- ============================================================
+-- 2. FAKE UNDERGROUND
+-- ============================================================
+do
+    local col2 = makeColumn(tabs[2].content)
+    xpcall(function()
+        local Players = game:GetService('Players')
+        local RunService = game:GetService('RunService')
+        local lp = Players.LocalPlayer
+        local FU = { on = false, depth = 5.8, walk = true, hide = true, camera = false, orbit = false, noclip = true, panic = false, pMin = -5, pMax = 5, pZ = false, anim = true, zeroVel = true, virtualCF = nil, saved = nil, track = nil, hb = nil, alive = true, rage = false, radius = 14, speed = 4, rate = 0.1, slot = 'Primary', maxDist = 400, team = true, ang = 0, target = nil, nextPick = 0, lastShot = 0, localCF = nil, status = nil }
+
+        local function hideChar()
+            local char = lp.Character; if not char then return end; FU.saved = {}
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA('BasePart') or part:IsA('Decal') then FU.saved[#FU.saved + 1] = { part = part, t = part.Transparency }; pcall(function() part.Transparency = 1 end) end
+            end
+        end
+        local function showChar()
+            if not FU.saved then return end
+            for _, d in ipairs(FU.saved) do if d.part and d.part.Parent then pcall(function() d.part.Transparency = d.t end) end end
+            FU.saved = nil
+        end
+        local function startAnim()
+            local hum = lp.Character and lp.Character:FindFirstChildOfClass('Humanoid'); if not hum or FU.track then return end
+            pcall(function()
+                local a = Instance.new('Animation'); a.AnimationId = 'rbxassetid://10714003221'
+                local t = hum:LoadAnimation(a); t:Play(0, 1, 0); t.TimePosition = 1.48; FU.track = t
+            end)
+        end
+        local function stopAnim() if FU.track then pcall(function() FU.track:Stop(); FU.track:Destroy() end); FU.track = nil end end
+
+        local RS_ = game:GetService('ReplicatedStorage'); local mods, modErr = nil, nil
+        local function getMods()
+            if mods then return mods end
+            local ok, res = pcall(function() return { util = require(RS_.Modules.Utility), enumLib = require(RS_.Modules.EnumLibrary), FC = require(lp.PlayerScripts.Controllers.FighterController) } end)
+            if ok then mods = res; modErr = nil else modErr = tostring(res) end
+            return mods
+        end
+        local SLOT_IDX = { Primary = 1, Secondary = 2, Melee = 3 }
+        local function validTarget(plr, myPos)
+            if plr == lp then return nil end
+            if FU.team and plr.Team ~= nil and plr.Team == lp.Team then return nil end
+            local ch = plr.Character; local root = ch and ch:FindFirstChild('HumanoidRootPart'); local head = ch and ch:FindFirstChild('Head'); local hum = ch and ch:FindFirstChildOfClass('Humanoid')
+            if not (root and head and hum) or hum.Health <= 0 then return nil end
+            if root.Position.Y < -500 or root.Position.Y > 2000 then return nil end
+            local d = (root.Position - myPos).Magnitude; if d > FU.maxDist then return nil end
+            return root, head, d
+        end
+        local function pickTarget(myPos)
+            local cur = FU.target
+            if cur and cur.plr and cur.plr.Parent then local root, head = validTarget(cur.plr, myPos); if root then cur.root, cur.head = root, head; return cur end end
+            local best, bestD = nil, math.huge
+            for _, plr in ipairs(Players:GetPlayers()) do local root, head, d = validTarget(plr, myPos); if root and d < bestD then bestD = d; best = { plr = plr, root = root, head = head } end end
+            FU.target = best; return best
+        end
+        local function shootAt(head, fromPos)
+            local m = getMods(); if not m then return false end; local lf = m.FC.LocalFighter; if not lf then return false end
+            if lf.EquippedItem == nil then pcall(function() lf:EquipItem(SLOT_IDX[FU.slot] or 1) end); return false end
+            local hp = head.Position; local aimCF = CFrame.lookAt(fromPos + Vector3.new(0, 1.5, 0), hp); local objSpace = head.CFrame:ToObjectSpace(CFrame.new(hp)); local data = {}
+            data[utf8.char(1)] = { [utf8.char(0)] = m.util:EncodeCFrame(aimCF), [utf8.char(1)] = m.util:EncodeCFrame(head.CFrame), [utf8.char(2)] = head, [utf8.char(3)] = m.util:EncodeCFrame(objSpace) }
+            return pcall(function() RS_.Remotes.Replication.Fighter.UseItem:FireServer(lf.EquippedItem:Get('ObjectID'), m.enumLib:ToEnum('StartShooting'), data, nil) end)
+        end
+
+        local function turnOff()
+            FU.on = false; FU.localCF = nil; FU.target = nil
+            pcall(function() RunService:UnbindFromRenderStep('FU_OrbitUndo') end)
+            if FU.hb then FU.hb:Disconnect(); FU.hb = nil end
+            pcall(function() RunService:UnbindFromRenderStep('FU_SurfaceCamera') end)
+            showChar(); stopAnim()
+            local hrp = lp.Character and lp.Character:FindFirstChild('HumanoidRootPart')
+            if hrp and FU.virtualCF then pcall(function() hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero; hrp.CFrame = FU.virtualCF end) end
+            FU.virtualCF = nil
+        end
+
+        local function turnOn()
+            FU.on = true; local hrp = lp.Character and lp.Character:FindFirstChild('HumanoidRootPart'); if hrp then FU.virtualCF = hrp.CFrame end
+            if FU.hide then hideChar() end; if FU.anim then startAnim() end
+            pcall(function() RunService:UnbindFromRenderStep('FU_SurfaceCamera') end)
+            RunService:BindToRenderStep('FU_SurfaceCamera', 201, function()
+                if FU.on and FU.camera then local cam = workspace.CurrentCamera; if cam and FU.depth > 0 then cam.CFrame = cam.CFrame + Vector3.new(0, FU.depth, 0) end end
+            end)
+            pcall(function() RunService:UnbindFromRenderStep('FU_OrbitUndo') end)
+            RunService:BindToRenderStep('FU_OrbitUndo', Enum.RenderPriority.Camera.Value - 1, function()
+                if FU.on and FU.localCF then local h = lp.Character and lp.Character:FindFirstChild('HumanoidRootPart'); if h then h.CFrame = FU.localCF end end
+            end)
+            FU.hb = RunService.Heartbeat:Connect(function(dt)
+                if not FU.on then return end
+                local char = lp.Character; local hrp2 = char and char:FindFirstChild('HumanoidRootPart'); local hum = char and char:FindFirstChildOfClass('Humanoid'); if not hrp2 or not hum then return end
+                local cam = workspace.CurrentCamera; local look = cam and cam.CFrame.LookVector or Vector3.new(0, 0, -1); local rot = CFrame.Angles(0, math.atan2(-look.X, -look.Z), 0)
+                if not FU.virtualCF then FU.virtualCF = CFrame.new(hrp2.Position) * rot end
+                local pos = FU.virtualCF.Position
+                if FU.walk and hum.MoveDirection.Magnitude > 0 then pos = pos + hum.MoveDirection * (hum.WalkSpeed * dt) end
+                FU.virtualCF = CFrame.new(pos) * rot; local under = pos - Vector3.new(0, FU.depth, 0)
+                if FU.panic then local lo, hi = math.min(FU.pMin, FU.pMax), math.max(FU.pMin, FU.pMax); under = under + Vector3.new(lo + math.random() * (hi - lo), 0, FU.pZ and (math.random() - 0.5) * (hi - lo) or 0) end
+                if FU.noclip then for _, p in ipairs(char:GetDescendants()) do if p:IsA('BasePart') and p.CanCollide then p.CanCollide = false end end end
+                if FU.zeroVel then hrp2.AssemblyLinearVelocity  = Vector3.zero; hrp2.AssemblyAngularVelocity = Vector3.zero end
+                local localCF = CFrame.new(under) * rot; FU.localCF = nil
+                if FU.rage then
+                    local tgt = pickTarget(pos)
+                    if tgt and not FU.orbit then hrp2.CFrame = localCF; if tick() - FU.lastShot >= FU.rate then FU.lastShot = tick(); shootAt(tgt.head, localCF.Position) end
+                    elseif tgt then
+                        FU.ang = (FU.ang + FU.speed * dt) % (math.pi * 2); local tp = tgt.root.Position
+                        local orbit = Vector3.new(tp.X + math.cos(FU.ang) * FU.radius, tp.Y - FU.depth, tp.Z + math.sin(FU.ang) * FU.radius)
+                        local yaw = CFrame.new(orbit) * CFrame.Angles(0, math.atan2(-(tp.X - orbit.X), -(tp.Z - orbit.Z)), 0)
+                        FU.localCF = localCF; hrp2.CFrame = yaw; if tick() - FU.lastShot >= FU.rate then FU.lastShot = tick(); shootAt(tgt.head, orbit) end
+                    else hrp2.CFrame = localCF end
+                else hrp2.CFrame = localCF end
+                if FU.hide and FU.saved then for _, d in ipairs(FU.saved) do if d.part and d.part.Parent and d.part.Transparency ~= 1 then pcall(function() d.part.Transparency = 1 end) end end end
+            end)
+        end
+
+        pcall(function()
+            local sec = col2:section({ name = "Fake Underground" })
+            sec:toggle({ name = "Fake Underground", default = false, callback = function(v) if v then turnOn() else turnOff() end end })
+            sec:slider({ name = "Depth", min = 0, max = 150, interval = 1, default = 6, suffix = " studs", callback = function(v) FU.depth = v end })
+            sec:toggle({ name = "Walk mode", default = true, callback = function(v) FU.walk = v end })
+            sec:toggle({ name = "Surface camera", default = false, callback = function(v) FU.camera = v end })
+            sec:toggle({ name = "Auto noclip", default = true, callback = function(v) FU.noclip = v end })
+            sec:toggle({ name = "Hide my character", default = true, callback = function(v) FU.hide = v; if FU.on then if v then hideChar() else showChar() end end end })
+            sec:toggle({ name = "Animation desync", default = true, callback = function(v) FU.anim = v; if FU.on then if v then startAnim() else stopAnim() end end end })
+            sec:toggle({ name = "Panic jitter", default = false, callback = function(v) FU.panic = v end })
+            sec:slider({ name = "Jitter min X", min = -50, max = 0, interval = 1, default = -5, callback = function(v) FU.pMin = v end })
+            sec:slider({ name = "Jitter max X", min = 0, max = 50, interval = 1, default = 5, callback = function(v) FU.pMax = v end })
+            sec:toggle({ name = "Jitter Z too", default = false, callback = function(v) FU.pZ = v end })
+        end)
+
+        pcall(function()
+            local sec2 = col2:section({ name = "Underground Ragebot" })
+            sec2:toggle({ name = "Underground ragebot", default = false, callback = function(v) FU.rage = v; FU.target = nil; if v then if not getMods() then warn("[Underground Ragebot] Modules not available: " .. tostring(modErr)) end; if not FU.on then turnOn() end end end })
+            sec2:toggle({ name = "Orbit the target", default = false, callback = function(v) FU.orbit = v end })
+            sec2:slider({ name = "Orbit radius", min = 3, max = 60, interval = 1, default = 14, suffix = " studs", callback = function(v) FU.radius = v end })
+            sec2:slider({ name = "Orbit speed", min = 1, max = 20, interval = 1, default = 4, suffix = " rad/s", callback = function(v) FU.speed = v end })
+            sec2:slider({ name = "Shoot delay", min = 0.01, max = 1, interval = 0.01, default = 0.1, suffix = "s", callback = function(v) FU.rate = v end })
+            sec2:slider({ name = "Max target distance", min = 50, max = 2000, interval = 1, default = 400, suffix = " studs", callback = function(v) FU.maxDist = v end })
+            sec2:dropdown({ name = "Weapon", items = { "Primary", "Secondary" }, default = "Primary", callback = function(v) FU.slot = v end })
+            sec2:toggle({ name = "Skip teammates", default = true, callback = function(v) FU.team = v end })
+        end)
+        lp.CharacterAdded:Connect(function() if FU.on then task.wait(1); turnOff(); turnOn() end end)
+    end, function(e) warn('[Sniflva Fake Underground] ' .. tostring(e)) end)
+end
+-- ============================================================
+-- 3. RAGEBOT 2 (core engine)
+-- ============================================================
+do
+    local cols = { ragebot = makeColumn(tabs[3].content), evasion = makeColumn(tabs[4].content), void = makeColumn(tabs[5].content), patterns = makeColumn(tabs[6].content) }
+    xpcall(function()
+        local players = game:GetService('Players'); local localplayer = players.LocalPlayer; local r_storage = game:GetService('ReplicatedStorage'); local RS_ = game:GetService('RunService'); local conns = {}
+        local run_service = { Heartbeat = { Connect = function(_, fn) local c = RS_.Heartbeat:Connect(fn); conns[#conns+1] = c; return c end }, BindToRenderStep = function(_, ...) return RS_:BindToRenderStep(...) end, UnbindFromRenderStep = function(_, ...) return RS_:UnbindFromRenderStep(...) end }
+        local M = {}
+        local config = { void_spam_enabled = false, vs_xp = 5000, vs_xn = 5000, vs_yp = 5000, vs_yn = 5000, vs_zp = 5000, vs_zn = 5000, vs_min_dist = 0, vs_max_dist = 50000, void_pattern = 'random', void_axis_x = false, void_axis_y = false, void_axis_z = false, void_smooth = false, void_smooth_alpha = 0.5, vs_dist_per_tp = 1000, et_order = 'Triangle', et_mode = 'Random', et_speed = 10000000, et_total = 500, anti_aim_enabled = false, aa_method = 'Static', aa_pixel_scale = 0, aa_spin_speed = 9999, aa_yaw = 0, aa_pitch = 0, aa_roll = 0, evasion_enabled = false, evasion_burst = 500, evasion_interval = 1, evasion_spin_speed = 9999, evasion_mode = 'Random', rage_bot_enabled = false, rage_type = 'Melee', rage_strategy = 'Orbit', rage_weapon = 'None', rage_hitbox = 'Head', rage_priority = '', rage_position = 'Inside', rage_tp_radius = 2, rage_tp_height = -4, rage_orbit_speed = 500, rage_spin = false, knife_dist = 3, shoot_attempts = 1, prediction_enabled = false, prediction_mult = 1.2, tp_prediction_enabled = false, tp_pred_strength = 1.0 }
+        local _sign = math.sign or function(x) if x > 0 then return 1 elseif x < 0 then return -1 else return 0 end end
+
+        M.get_hrp = function(plr) local p = plr or localplayer; if not p.Character then return nil end; return p.Character:FindFirstChild("HumanoidRootPart") end
+        M.get_rage_target = function()
+            local targetName = config.rage_priority
+            if targetName and targetName ~= "" then local sp = players:FindFirstChild(targetName); if sp and sp.Character and sp.Character:FindFirstChild("HumanoidRootPart") and sp.Character:FindFirstChildOfClass("Humanoid").Health > 0 and not sp.Character:FindFirstChildOfClass("ForceField") and (localplayer.Team == nil or sp.Team == nil or localplayer.Team ~= sp.Team) then return sp end end
+            local best_target, best_score = nil, math.huge; local hrp = M.get_hrp(localplayer); if not hrp then return nil end
+            for _, p in ipairs(players:GetPlayers()) do
+                if p ~= localplayer and p.Character then
+                    if p.Character:FindFirstChildOfClass("ForceField") then continue end
+                    local t_hrp = p.Character:FindFirstChild("HumanoidRootPart"); local hum = p.Character:FindFirstChild("Humanoid")
+                    local ok = t_hrp and hum and hum.Health > 0 and (localplayer.Team == nil or p.Team == nil or localplayer.Team ~= p.Team)
+                    if ok then local score = (hrp.Position - t_hrp.Position).Magnitude; if score < best_score then best_score = score; best_target = p end end
+                end
+            end
+            return best_target
+        end
+        local cached_target, last_target_tick = nil, 0
+        M.get_closest = function(check_ff)
+            local now = tick()
+            if now - last_target_tick < 0.1 then if cached_target and cached_target.Character and cached_target.Character:FindFirstChild("HumanoidRootPart") and cached_target.Character:FindFirstChild("Humanoid").Health > 0 then if not check_ff or not cached_target.Character:FindFirstChildOfClass("ForceField") then return cached_target end end end
+            last_target_tick = now; local closest, min_d = nil, math.huge; local hrp = M.get_hrp(localplayer); if not hrp then return nil end
+            for _, p in ipairs(players:GetPlayers()) do
+                if p ~= localplayer and p.Character then
+                    if check_ff and p.Character:FindFirstChildOfClass("ForceField") then continue end
+                    local t_hrp = p.Character:FindFirstChild("HumanoidRootPart"); local hum = p.Character:FindFirstChild("Humanoid")
+                    if t_hrp and hum and hum.Health > 0 then if localplayer.Team == nil or p.Team == nil or localplayer.Team ~= p.Team then local d = (hrp.Position - t_hrp.Position).Magnitude; if d < min_d then min_d = d; closest = p end end end
+                end
+            end
+            cached_target = closest; return closest
+        end
+
+        local function compute_evasion_offset(mode, t, r)
+            if mode=="Random" then return Vector3.new(math.random(-r,r),math.random(-r,r),math.random(-r,r))
+            elseif mode=="Circle" then local a=t*math.pi*2 return Vector3.new(math.cos(a)*r,0,math.sin(a)*r)
+            elseif mode=="Spiral" then local a=t*math.pi*2*3 return Vector3.new(math.cos(a)*r*t,math.sin(t*math.pi)*r*0.5,math.sin(a)*r*t)
+            elseif mode=="Figure8" then local a=t*math.pi*2 return Vector3.new(math.sin(a)*r,math.sin(a*2)*r*0.5,math.cos(a)*r*math.cos(a))
+            elseif mode=="Helix" then local a=t*math.pi*2*4 return Vector3.new(math.cos(a)*r,math.sin(t*math.pi*2)*r,math.sin(a)*r)
+            elseif mode=="Star" then local k=math.floor(t*5)%2==0; local a=t*math.pi*2 return Vector3.new(math.cos(a)*(k and r or r*0.4),0,math.sin(a)*(k and r or r*0.4))
+            elseif mode=="Triangle" then local p=t%3; local v; if p<1 then v=Vector3.new(0,r,0):Lerp(Vector3.new(r,-r,0),p) elseif p<2 then v=Vector3.new(r,-r,0):Lerp(Vector3.new(-r,-r,0),p-1) else v=Vector3.new(-r,-r,0):Lerp(Vector3.new(0,r,0),p-2) end return v
+            elseif mode=="Square" then local p=t%4; if p<1 then return Vector3.new(r,-r,0):Lerp(Vector3.new(r,r,0),p) elseif p<2 then return Vector3.new(r,r,0):Lerp(Vector3.new(-r,r,0),p-1) elseif p<3 then return Vector3.new(-r,r,0):Lerp(Vector3.new(-r,-r,0),p-2) else return Vector3.new(-r,-r,0):Lerp(Vector3.new(r,-r,0),p-3) end
+            elseif mode=="Pentagon" then local ph=(math.floor(t*5)%5)/5*math.pi*2 return Vector3.new(math.cos(ph)*r,0,math.sin(ph)*r)
+            elseif mode=="Hexagon" then local ph=(math.floor(t*6)%6)/6*math.pi*2 return Vector3.new(math.cos(ph)*r,0,math.sin(ph)*r)
+            elseif mode=="Octagon" then local ph=(math.floor(t*8)%8)/8*math.pi*2 return Vector3.new(math.cos(ph)*r,0,math.sin(ph)*r)
+            elseif mode=="Diamond" then local p=t%4; if p<1 then return Vector3.new(0,r,0):Lerp(Vector3.new(r,0,0),p) elseif p<2 then return Vector3.new(r,0,0):Lerp(Vector3.new(0,-r,0),p-1) elseif p<3 then return Vector3.new(0,-r,0):Lerp(Vector3.new(-r,0,0),p-2) else return Vector3.new(-r,0,0):Lerp(Vector3.new(0,r,0),p-3) end
+            elseif mode=="Cross" then local tog=math.floor(t*10)%2==0 return Vector3.new(tog and r or 0,0,not tog and r or 0)
+            elseif mode=="Zigzag" then local p=t%2 return Vector3.new((p<1 and p or 2-p)*r*2-r,0,math.floor(t)*r*0.5)
+            elseif mode=="Wave" then return Vector3.new(t*r*4,math.sin(t*math.pi*6)*r,0)
+            elseif mode=="Sine" then local a=t*math.pi*2*3 return Vector3.new(math.sin(a)*r,math.cos(a*0.5)*r*0.5,math.sin(a*0.7)*r*0.3)
+            elseif mode=="Lemniscate" then local a=t*math.pi*2; local d=1+math.sin(a)^2 return Vector3.new(math.cos(a)/d*r,0,math.sin(a)*math.cos(a)/d*r)
+            elseif mode=="Rose" then local a=t*math.pi*2; local rr=math.cos(3*a)*r return Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif mode=="Butterfly" then local a=t*math.pi*2; local rr=(math.exp(math.cos(a))-2*math.cos(4*a))*r*0.3 return Vector3.new(math.sin(a)*rr,math.cos(a*2)*r*0.3,math.cos(a)*rr)
+            elseif mode=="Cardioid" then local a=t*math.pi*2 return Vector3.new((1-math.cos(a))*r*0.5*math.cos(a),0,(1-math.cos(a))*r*0.5*math.sin(a))
+            elseif mode=="Epicycloid" then local a=t*math.pi*2; local R=r; local rc=r*0.3 return Vector3.new((R+rc)*math.cos(a)-rc*math.cos((R/rc+1)*a),0,(R+rc)*math.sin(a)-rc*math.sin((R/rc+1)*a))
+            elseif mode=="Hypocycloid" then local a=t*math.pi*2; local R=r; local rc=r*0.3 return Vector3.new((R-rc)*math.cos(a)+rc*math.cos((R/rc-1)*a),0,(R-rc)*math.sin(a)-rc*math.sin((R/rc-1)*a))
+            elseif mode=="Hypotrochoid" then local a=t*math.pi*2; local R=r; local rc=r*0.4; local d=r*0.7 return Vector3.new((R-rc)*math.cos(a)+d*math.cos((R/rc-1)*a),0,(R-rc)*math.sin(a)-d*math.sin((R/rc-1)*a))
+            elseif mode=="Epitrochoid" then local a=t*math.pi*2; local R=r; local rc=r*0.4; local d=r*0.6 return Vector3.new((R+rc)*math.cos(a)-d*math.cos((R/rc+1)*a),0,(R+rc)*math.sin(a)-d*math.sin((R/rc+1)*a))
+            elseif mode=="Fermat" then local a=t*math.pi*4; local rr=math.sqrt(math.abs(a))*r*0.3 return Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif mode=="Archimedes" then local a=t*math.pi*8 return Vector3.new(a*math.cos(a)*r*0.05,0,a*math.sin(a)*r*0.05)
+            elseif mode=="Lituus" then local a=t*math.pi*6+0.01; local rr=r/math.sqrt(a) return Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif mode=="Cissoid" then local a=t*math.pi*2-math.pi/2+0.01; local rr=2*r*0.5*(math.sin(a)^2/math.cos(a)) return Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif mode=="Strophoid" then local a=t*math.pi*2-math.pi/2+0.01; local rr=r*0.5*(-math.cos(2*a)/math.cos(a)) return Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif mode=="Limacon" then local a=t*math.pi*2; local rr=(r*0.6+r*0.4*math.cos(a)) return Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif mode=="Astroid" then local a=t*math.pi*2 return Vector3.new(math.cos(a)^3*r,math.sin(a*2)*r*0.2,math.sin(a)^3*r)
+            elseif mode=="Deltoid" then local a=t*math.pi*2 return Vector3.new((2*math.cos(a)+math.cos(2*a))*r*0.3,0,(2*math.sin(a)-math.sin(2*a))*r*0.3)
+            elseif mode=="Nephroid" then local a=t*math.pi*2 return Vector3.new((3*math.cos(a)-math.cos(3*a))*r*0.25,0,(3*math.sin(a)-math.sin(3*a))*r*0.25)
+            elseif mode=="Trefoil" then local a=t*math.pi*2; local rr=math.cos(3*a)*r return Vector3.new(rr*math.cos(a),math.sin(a*3)*r*0.2,rr*math.sin(a))
+            elseif mode=="Viviani" then local a=t*math.pi*2 return Vector3.new(r*(1+math.cos(a))*0.5,r*math.sin(a)*0.5,r*math.sin(a/2)*0.5)
+            elseif mode=="Rhodonea" then local a=t*math.pi*2; local rr=math.cos(4*a)*r return Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif mode=="Maclaurin" then local a=t*math.pi*2; local rr=r*0.5*(2*math.cos(a)-1) return Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif mode=="Trisectrix" then local a=t*math.pi*2+0.01; local rr=r*0.5*(4*math.cos(a)-1/math.cos(a)) return Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif mode=="Folium" then local a=t*math.pi*2-math.pi/4+0.01; local d=math.sin(a)^3+math.cos(a)^3; if math.abs(d)<0.01 then d=0.01 end; local rr=r*3*math.sin(a)*math.cos(a)/d return Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif mode=="Cochleoid" then local a=t*math.pi*4+0.01; local rr=r*math.sin(a)/a return Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif mode=="Involute" then local a=t*math.pi*4 return Vector3.new(r*0.3*(math.cos(a)+a*math.sin(a)),0,r*0.3*(math.sin(a)-a*math.cos(a)))
+            else return Vector3.new(math.random(-r,r),math.random(-r,r),math.random(-r,r)) end
+        end
+
+        local evasion_conn = nil
+        M.start_evasion = function()
+            if evasion_conn then evasion_conn:Disconnect() end
+            local dt_buf = 0
+            evasion_conn = run_service.Heartbeat:Connect(function(dt)
+                if not config.evasion_enabled then return end
+                local hrp = M.get_hrp(localplayer); local hum = localplayer.Character and localplayer.Character:FindFirstChildOfClass("Humanoid")
+                if not hrp or not hum or hum.Health <= 0 then return end
+                if hum:GetState() ~= Enum.HumanoidStateType.Physics then hum:ChangeState(Enum.HumanoidStateType.Physics) end
+                dt_buf = dt_buf + dt; local interval = math.max((config.evasion_interval or 1) * 0.001, 0.001)
+                if dt_buf >= interval then
+                    dt_buf = 0; local iters = math.clamp(config.evasion_burst or 500, 100, 1000); local spd = config.evasion_spin_speed or 9999; local t = tick()
+                    for i = 1, iters do
+                        local frac = (i-1)/iters; local offset = compute_evasion_offset(config.evasion_mode or "Random", frac, 50000)
+                        local dest = hrp.Position + offset
+                        hrp.CFrame = CFrame.new(dest.X, dest.Y, dest.Z) * CFrame.Angles(math.rad(spd*t*1.0 % 360), math.rad(spd*t*0.73 % 360), math.rad(spd*t*0.41 % 360))
+                    end
+                    hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
+                end
+            end)
+        end
+        M.stop_evasion = function() if evasion_conn then evasion_conn:Disconnect(); evasion_conn = nil end; config.evasion_enabled = false end
+
+        local aa_conn_s, aa_orbit_angle = nil, 0
+        M.start_anti_aim = function()
+            if aa_conn_s then aa_conn_s:Disconnect() end
+            local aa_t0 = tick()
+            aa_conn_s = run_service.Heartbeat:Connect(function(dt)
+                if not config.anti_aim_enabled then return end
+                local hrp = M.get_hrp(localplayer); local hum = localplayer.Character and localplayer.Character:FindFirstChildOfClass("Humanoid"); local cam = workspace.CurrentCamera
+                if not hrp or not cam then return end
+                local method = config.aa_method or "Static"; local t = tick() - aa_t0
+                if method=="Pixelated" then
+                    if hum then hum.AutoRotate=false end
+                    local char=localplayer.Character; if char then for _,v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then pcall(function() v.Size=v.Size*math.clamp((config.aa_pixel_scale or 1)/100,0.01,1) end) end end end
+                    hrp.CFrame=hrp.CFrame*CFrame.Angles(math.rad(math.random(-360,360)),math.rad(math.random(-360,360)),math.rad(math.random(-360,360)))
+                elseif method=="Static" then if hum then hum.AutoRotate=false end; hrp.CFrame=CFrame.new(hrp.Position)*CFrame.Angles(math.rad(180),0,0)
+                elseif method=="Spin" then if hum then hum.AutoRotate=false end; hrp.CFrame=CFrame.new(hrp.Position)*CFrame.Angles(0,math.rad((config.aa_spin_speed or 9999)*t%360),0)
+                elseif method=="Jitter" then if hum then hum.AutoRotate=false end; local tog=(math.floor(t*30))%2==0; hrp.CFrame=CFrame.new(hrp.Position)*CFrame.Angles(tog and math.rad(180) or 0,tog and math.rad(90) or math.rad(-90),0)
+                elseif method=="Desync" then
+                    if hum then hum.AutoRotate=false end
+                    local rootPos=hrp.Position; local look=cam.CFrame.LookVector; local base=CFrame.lookAt(rootPos,rootPos+Vector3.new(look.X,0,look.Z))
+                    hrp.CFrame=base*CFrame.Angles(math.rad(math.random(-360,360)),math.rad(math.random(-360,360)),math.rad(math.random(-360,360)))
+                    for _,v in pairs(localplayer.Character:GetDescendants()) do if v:IsA("Motor6D") and v.Name~="RootJoint" then pcall(function() v.Transform=CFrame.Angles(math.rad(math.random(0,360)),math.rad(math.random(0,360)),math.rad(math.random(0,360))) end) end end
+                elseif method=="Sway" then if hum then hum.AutoRotate=false end; hrp.CFrame=CFrame.new(hrp.Position)*CFrame.Angles(math.cos(t*2)*math.rad(45),math.sin(t*3)*math.rad(90),math.sin(t*1.5)*math.rad(30))
+                elseif method=="Breaker" then
+                    if hum then hum.AutoRotate=false end
+                    if (math.floor(t*20))%5==0 then hrp.CFrame=CFrame.new(hrp.Position)*CFrame.Angles(math.rad(math.random(-720,720)),math.rad(math.random(-720,720)),math.rad(math.random(-720,720))) else hrp.CFrame=CFrame.new(hrp.Position)*CFrame.Angles(math.rad(180),0,0) end
+                elseif method=="Lurk" then
+                    if hum then hum.AutoRotate=false end
+                    local look=cam.CFrame.LookVector; local away=Vector3.new(-look.X,0,-look.Z); local rootPos=hrp.Position
+                    if away.Magnitude>0.001 then hrp.CFrame=CFrame.lookAt(rootPos,rootPos+away)*CFrame.Angles(math.rad(15),math.rad(180),0) end
+                elseif method=="Orbit" then
+                    if hum then hum.AutoRotate=false end
+                    aa_orbit_angle=aa_orbit_angle+dt*(config.aa_spin_speed or 9999)*0.05
+                    local dirs={Vector3.new(math.cos(aa_orbit_angle),0,math.sin(aa_orbit_angle)),Vector3.new(0,math.sin(aa_orbit_angle),math.cos(aa_orbit_angle)),Vector3.new(math.cos(aa_orbit_angle*1.3),math.sin(aa_orbit_angle*0.7),math.sin(aa_orbit_angle*1.1))}
+                    local chosen=dirs[(math.floor(t*8)%#dirs)+1]; local rootPos=hrp.Position; local rand_r=math.random(500,50000)
+                    hrp.CFrame=CFrame.new(rootPos+chosen*rand_r)*CFrame.Angles(math.rad(math.random(-360,360)),math.rad(math.random(-360,360)),math.rad(math.random(-360,360)))
+                    hrp.AssemblyLinearVelocity=Vector3.zero; hrp.AssemblyAngularVelocity=Vector3.zero
+                elseif method=="Custom" then if hum then hum.AutoRotate=false end; hrp.CFrame=CFrame.new(hrp.Position)*CFrame.Angles(math.rad(config.aa_pitch or 0),math.rad(config.aa_yaw or 0),math.rad(config.aa_roll or 0))
+                end
+            end)
+        end
+        M.stop_anti_aim = function() if aa_conn_s then aa_conn_s:Disconnect(); aa_conn_s=nil end; local hum=localplayer.Character and localplayer.Character:FindFirstChildOfClass("Humanoid"); if hum then hum.AutoRotate=true end; config.anti_aim_enabled=false end
+
+        local vs_spiral, vs_wave, vs_helix, vs_strobe = 0, 0, 0, false
+        local vs_bounce_dir = { x=1, y=1, z=1 }; local vs_chaos = { math.random(), math.random(), math.random() }
+        local function get_vs_delta(dt, xp, xn, yp, yn, zp, zn)
+            local ax,ay,az,p = config.void_axis_x, config.void_axis_y, config.void_axis_z, config.void_pattern
+            if p=="spiral" then vs_spiral=vs_spiral+0.35 return Vector3.new(ax and math.cos(vs_spiral)*(xp+xn)/2 or 0, ay and math.sin(vs_spiral*0.6)*(yp+yn)/2 or 0, az and math.sin(vs_spiral)*(zp+zn)/2 or 0)
+            elseif p=="wave" then vs_wave=vs_wave+dt*8 return Vector3.new(ax and math.sin(vs_wave)*(xp+xn)/2 or 0, ay and math.sin(vs_wave*1.7)*(yp+yn)/2 or 0, az and math.cos(vs_wave*0.9)*(zp+zn)/2 or 0)
+            elseif p=="bounce" then local step=Vector3.new(ax and vs_bounce_dir.x*(xp+xn)/3 or 0, ay and vs_bounce_dir.y*(yp+yn)/3 or 0, az and vs_bounce_dir.z*(zp+zn)/3 or 0) if math.random()<0.25 then vs_bounce_dir.x=-vs_bounce_dir.x end if math.random()<0.25 then vs_bounce_dir.y=-vs_bounce_dir.y end if math.random()<0.25 then vs_bounce_dir.z=-vs_bounce_dir.z end return step
+            elseif p=="chaos" then vs_chaos[1]=(vs_chaos[1]*1664525+1013904223)%1; vs_chaos[2]=(vs_chaos[2]*22695477+1)%1; vs_chaos[3]=(vs_chaos[3]*214013+2531011)%1 return Vector3.new(ax and (vs_chaos[1]*(xp+xn)-xn) or 0, ay and (vs_chaos[2]*(yp+yn)-yn) or 0, az and (vs_chaos[3]*(zp+zn)-zn) or 0)
+            elseif p=="cross" then local tog=(math.floor(tick()*10))%2==0 return Vector3.new(ax and (tog and (math.random()*(xp+xn)-xn) or 0) or 0, ay and (not tog and (math.random()*(yp+yn)-yn) or 0) or 0, az and (tog and (math.random()*(zp+zn)-zn) or 0) or 0)
+            elseif p=="helix" then vs_helix=vs_helix+dt*6 return Vector3.new(ax and math.cos(vs_helix*2)*(xp+xn)/2 or 0, ay and math.sin(vs_helix)*(yp+yn)/8 or 0, az and math.sin(vs_helix*2)*(zp+zn)/2 or 0)
+            elseif p=="strobe" then vs_strobe=not vs_strobe; local s=vs_strobe and 1 or -1 return Vector3.new(ax and s*xp or 0, ay and s*yp or 0, az and s*zp or 0)
+            elseif p=="rhombus" then
+                local phase=(dt*2)%4; local wx=(xp+xn)/2; local z=(zp+zn)/2; local y=(yp+yn)/2
+                if phase<1 then return Vector3.new(ax and wx*(1-phase) or 0, ay and -y or 0, az and z*phase or 0)
+                elseif phase<2 then local pt=phase-1; return Vector3.new(ax and -wx*pt or 0, ay and -y or 0, az and z*(1-pt) or 0)
+                elseif phase<3 then local pt=phase-2; return Vector3.new(ax and -wx*(1-pt) or 0, ay and -y or 0, az and -z*pt or 0)
+                else local pt=phase-3; return Vector3.new(ax and wx*pt or 0, ay and -y or 0, az and -z*(1-pt) or 0) end
+            elseif p=="infinity" then return Vector3.new(ax and math.sin(dt*2)*(xp+xn)/2 or 0, ay and math.sin(dt*4)*(yp+yn)/2 or 0, az and math.sin(dt*2)*math.cos(dt*2)*(zp+zn)/2 or 0)
+            elseif p=="flower" then local r2=(xp+xn)/2*math.cos(dt*4) return Vector3.new(ax and math.cos(dt*2)*r2 or 0, ay and math.sin(dt*4)*(yp+yn)/2 or 0, az and math.sin(dt*2)*r2 or 0)
+            elseif p=="butterfly" then local r2=(xp+xn)/2*(math.exp(math.cos(dt*2))-2*math.cos(4*dt*2)) return Vector3.new(ax and math.cos(dt*2)*r2 or 0, ay and math.cos(dt*4)*(yp+yn)/2 or 0, az and math.sin(dt*2)*r2 or 0)
+            elseif p=="tornado" then return Vector3.new(ax and math.cos(dt*5)*dt*1000 or 0, ay and (dt*5000)%yn or 0, az and math.sin(dt*5)*dt*1000 or 0)
+            elseif p=="heart" then local x=16*math.sin(dt*2)^3; local y=13*math.cos(dt*2)-5*math.cos(2*dt*2)-2*math.cos(3*dt*2)-math.cos(4*dt*2) return Vector3.new(ax and x*(xp+xn)/32 or 0, ay and y*(yp+yn)/32 or 0, az and math.sin(dt*2)*(zp+zn)/2 or 0)
+            elseif p=="hexagon" then local ph=(math.floor(dt*2)%6)/6*math.pi*2 return Vector3.new(ax and math.cos(ph)*(xp+xn)/2 or 0, ay and (yp+yn)/2 or 0, az and math.sin(ph)*(zp+zn)/2 or 0)
+            elseif p=="octagon" then local ph=(math.floor(dt*2)%8)/8*math.pi*2 return Vector3.new(ax and math.cos(ph)*(xp+xn)/2 or 0, ay and (yp+yn)/2 or 0, az and math.sin(ph)*(zp+zn)/2 or 0)
+            elseif p=="star" then local r2=(math.floor(dt*5)%2==0) and (xp+xn)/2 or (xp+xn)/4; local ph=dt*math.pi*2 return Vector3.new(ax and math.cos(ph)*r2 or 0, ay and (yp+yn)/2 or 0, az and math.sin(ph)*r2 or 0)
+            elseif p=="crescent" then return Vector3.new(ax and math.cos(dt*2)*(xp+xn)/2-math.cos(dt*4)*(xp+xn)/4 or 0, ay and math.cos(dt*3)*(yp+yn)/2 or 0, az and math.sin(dt*2)*(zp+zn)/2-math.sin(dt*4)*(zp+zn)/4 or 0)
+            elseif p=="vortex" then return Vector3.new(ax and math.cos(dt*3)*(xp+xn)/2 or 0, ay and math.sin(dt*3)*(yp+yn)/2 or 0, az and math.sin(dt*1.5)*(zp+zn)/2 or 0)
+            else return Vector3.new(ax and (math.random()*(xp+xn)-xn) or 0, ay and (math.random()*(yp+yn)-yn) or 0, az and (math.random()*(zp+zn)-zn) or 0) end
+        end
+
+        local function get_vs_order_offset(order, frac, i, ph, radius)
+            local offset = Vector3.zero
+            if order=="Triangle" then
+                local seg=math.floor(frac*3); local f=(frac*3)-seg
+                if seg==0 then offset=Vector3.new(0,radius,0):Lerp(Vector3.new(radius,-radius,0),f) elseif seg==1 then offset=Vector3.new(radius,-radius,0):Lerp(Vector3.new(-radius,-radius,0),f) else offset=Vector3.new(-radius,-radius,0):Lerp(Vector3.new(0,radius,0),f) end
+            elseif order=="Circle" then offset=Vector3.new(math.cos(ph)*radius,0,math.sin(ph)*radius)
+            elseif order=="Square" then
+                local seg=math.floor(frac*4); local f=(frac*4)-seg
+                if seg==0 then offset=Vector3.new(radius,-radius,0):Lerp(Vector3.new(radius,radius,0),f) elseif seg==1 then offset=Vector3.new(radius,radius,0):Lerp(Vector3.new(-radius,radius,0),f) elseif seg==2 then offset=Vector3.new(-radius,radius,0):Lerp(Vector3.new(-radius,-radius,0),f) else offset=Vector3.new(-radius,-radius,0):Lerp(Vector3.new(radius,-radius,0),f) end
+            elseif order=="Pentagon" then local seg=math.floor(frac*5); local f=(frac*5)-seg; local a1=(seg/5)*math.pi*2; local a2=((seg+1)/5)*math.pi*2; offset=Vector3.new(math.cos(a1)*radius,0,math.sin(a1)*radius):Lerp(Vector3.new(math.cos(a2)*radius,0,math.sin(a2)*radius),f)
+            elseif order=="Hexagon" then local seg=math.floor(frac*6); local f=(frac*6)-seg; local a1=(seg/6)*math.pi*2; local a2=((seg+1)/6)*math.pi*2; offset=Vector3.new(math.cos(a1)*radius,0,math.sin(a1)*radius):Lerp(Vector3.new(math.cos(a2)*radius,0,math.sin(a2)*radius),f)
+            elseif order=="Octagon" then local seg=math.floor(frac*8); local f=(frac*8)-seg; local a1=(seg/8)*math.pi*2; local a2=((seg+1)/8)*math.pi*2; offset=Vector3.new(math.cos(a1)*radius,0,math.sin(a1)*radius):Lerp(Vector3.new(math.cos(a2)*radius,0,math.sin(a2)*radius),f)
+            elseif order=="Star" then local seg=math.floor(frac*10); local f=(frac*10)-seg; local ro=radius; local ri=radius*0.4; local r1=seg%2==0 and ro or ri; local r2=seg%2==0 and ri or ro; local a1=(seg/10)*math.pi*2; local a2=((seg+1)/10)*math.pi*2; offset=Vector3.new(math.cos(a1)*r1,0,math.sin(a1)*r1):Lerp(Vector3.new(math.cos(a2)*r2,0,math.sin(a2)*r2),f)
+            elseif order=="Diamond" then local seg=math.floor(frac*4); local f=(frac*4)-seg; if seg==0 then offset=Vector3.new(0,radius,0):Lerp(Vector3.new(radius,0,0),f) elseif seg==1 then offset=Vector3.new(radius,0,0):Lerp(Vector3.new(0,-radius,0),f) elseif seg==2 then offset=Vector3.new(0,-radius,0):Lerp(Vector3.new(-radius,0,0),f) else offset=Vector3.new(-radius,0,0):Lerp(Vector3.new(0,radius,0),f) end
+            elseif order=="Cross" then local seg=math.floor(frac*4); local f=(frac*4)-seg; if seg==0 then offset=Vector3.new(-radius,0,0):Lerp(Vector3.new(radius,0,0),f) elseif seg==1 then offset=Vector3.new(radius,0,0):Lerp(Vector3.new(0,0,0),f) elseif seg==2 then offset=Vector3.new(0,0,-radius):Lerp(Vector3.new(0,0,radius),f) else offset=Vector3.new(0,0,radius):Lerp(Vector3.new(0,0,0),f) end
+            elseif order=="Spiral" then local turns=3; local a=frac*math.pi*2*turns; local r=frac*radius; offset=Vector3.new(math.cos(a)*r,math.sin(frac*math.pi*2)*radius*0.5,math.sin(a)*r)
+            elseif order=="Zigzag" then local segs=20; local seg=math.floor(frac*segs); local f=(frac*segs)-seg; local x1=(seg%2==0) and -radius or radius; local x2=(seg%2==0) and radius or -radius; local z1=(seg/segs)*radius*2-radius; local z2=((seg+1)/segs)*radius*2-radius; offset=Vector3.new(x1,0,z1):Lerp(Vector3.new(x2,0,z2),f)
+            elseif order=="Wave" then local x=(frac-0.5)*radius*2; offset=Vector3.new(x,math.sin(frac*math.pi*6)*radius,0)
+            elseif order=="Figure8" then offset=Vector3.new(math.sin(ph)*radius,math.sin(ph*2)*radius*0.25,math.sin(ph)*math.cos(ph)*radius)
+            elseif order=="Lemniscate" then local cos2=math.cos(2*ph); local rr=cos2>=0 and math.sqrt(cos2)*radius or 0; offset=Vector3.new(math.cos(ph)*rr,0,math.sin(ph)*rr)
+            elseif order=="Rose" then local a=frac*math.pi; local rr=math.cos(3*a)*radius; offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Butterfly" then local rr=(math.exp(math.cos(ph))-2*math.cos(4*ph))*radius*0.3; offset=Vector3.new(math.sin(ph)*rr,math.cos(ph*2)*radius*0.25,math.cos(ph)*rr)
+            elseif order=="Cardioid" then local rr=(1-math.cos(ph))*radius*0.5; offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Helix3D" then local a=frac*math.pi*4; offset=Vector3.new(math.cos(a)*radius,frac*radius*2-radius,math.sin(a)*radius)
+            elseif order=="Sine" then local a=frac*math.pi*6; offset=Vector3.new(math.sin(a)*radius,math.cos(a*0.5)*radius*0.5,math.sin(a*0.7)*radius*0.3)
+            elseif order=="Deltoid" then local r3=radius/3; offset=Vector3.new((2*r3*math.cos(ph)+r3*math.cos(2*ph)),0,(2*r3*math.sin(ph)-r3*math.sin(2*ph)))
+            elseif order=="Astroid" then offset=Vector3.new(math.cos(ph)^3*radius,math.sin(ph*2)*radius*0.2,math.sin(ph)^3*radius)
+            elseif order=="Nephroid" then offset=Vector3.new((3*math.cos(ph)-math.cos(3*ph))*radius*0.25,0,(3*math.sin(ph)-math.sin(3*ph))*radius*0.25)
+            elseif order=="Trefoil" then local p=2; local q=3; local a=ph; local r2=math.cos(q*a)+2; offset=Vector3.new(r2*math.cos(p*a)*radius*0.3,math.sin(q*a)*radius*0.3,r2*math.sin(p*a)*radius*0.3)
+            elseif order=="Rhodonea" then local rr=math.cos(2*ph)*radius; offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Limacon" then local rr=radius*0.6+radius*0.4*math.cos(ph); offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Folium" then local a=frac*math.pi*1.5-math.pi*0.25+0.05; local d=math.sin(a)^3+math.cos(a)^3; if math.abs(d)<0.01 then d=0.01 end; local rr=3*math.sin(a)*math.cos(a)/d*radius*0.5; rr=math.clamp(rr,-radius,radius); offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Cochleoid" then local a=frac*math.pi*4+0.01; local rr=math.sin(a)/a*radius; offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Involute" then local a=frac*math.pi*4; offset=Vector3.new(radius*0.25*(math.cos(a)+a*math.sin(a)),0,radius*0.25*(math.sin(a)-a*math.cos(a)))
+            elseif order=="Fermat" then local a=frac*math.pi*4; local rr=math.sqrt(a)*radius*0.5; offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Archimedes" then local a=frac*math.pi*8; local rr=a/(math.pi*8)*radius; offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Parabola" then local x=(frac-0.5)*radius*2; offset=Vector3.new(x,x*x/radius,0)
+            elseif order=="Ellipse" then offset=Vector3.new(math.cos(ph)*radius,0,math.sin(ph)*radius*0.5)
+            elseif order=="Cycloid" then local a=frac*math.pi*4; offset=Vector3.new((a-math.sin(a))*radius*0.15,(1-math.cos(a))*radius*0.4,0)
+            elseif order=="Bifolium" then local rr=math.sin(ph)*math.cos(ph)^2*radius*4; offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Trifolium" then local rr=(math.cos(3*ph)+1)*radius*0.5; offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Quadrifolium" then local rr=math.cos(2*ph)*radius; offset=Vector3.new(rr*math.cos(ph),rr*0.2,rr*math.sin(ph))
+            elseif order=="Cinquefoil" then local a=frac*math.pi*4; local rr=math.cos(5*a/2)*radius; offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Sexfoil" then local rr=math.cos(3*ph)*radius; offset=Vector3.new(rr*math.cos(ph),math.sin(ph*6)*radius*0.15,rr*math.sin(ph))
+            elseif order=="Gear" then local rr=radius*(1+0.2*math.cos(8*ph)); offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Pinwheel" then local rr=radius*(1+0.5*math.sin(6*ph)); local twist=math.sin(6*ph)*0.3; offset=Vector3.new(rr*math.cos(ph+twist),math.sin(ph*6)*radius*0.15,rr*math.sin(ph+twist))
+            elseif order=="Sunflower" then local rr=radius*(0.5+0.5*math.cos(ph*12)); offset=Vector3.new(rr*math.cos(ph),math.cos(ph*12)*radius*0.15,rr*math.sin(ph))
+            elseif order=="Daisy" then local rr=(math.cos(ph*10)+1)*radius*0.5; offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Galaxy" then local a=frac*math.pi*6; local rr=frac*radius; offset=Vector3.new(rr*math.cos(a),math.sin(frac*math.pi*2)*radius*0.2,rr*math.sin(a))
+            elseif order=="Comet" then local rr=radius*0.5/(1+0.8*math.cos(ph)); rr=math.clamp(rr,0,radius*3); offset=Vector3.new(rr*math.cos(ph),math.sin(ph*3)*radius*0.15,rr*math.sin(ph))
+            elseif order=="Maltese" then local rr=math.sin(4*ph)*radius*0.5; offset=Vector3.new(rr*math.cos(ph),rr*0.4,rr*math.sin(ph))
+            elseif order=="Lightning" then local x=(frac-0.5)*radius*2; offset=Vector3.new(x+math.sin(frac*47)*radius*0.5,math.sin(frac*50)*radius*0.5,(math.sin(frac*31)-0.5)*radius)
+            elseif order=="Fractal" then local rr=math.cos(ph)*math.sin(2*ph)*math.cos(3*ph)*radius; offset=Vector3.new(rr*math.cos(ph),rr*math.sin(2*ph)*0.5,rr*math.sin(ph))
+            elseif order=="Hyperbola" then local t=(frac-0.5)*4; offset=Vector3.new(math.cosh(t)*radius*0.5,0,math.sinh(t)*radius*0.5)
+            elseif order=="Strophoid" then local a=frac*math.pi*1.8-math.pi*0.9+0.05; local rr=-math.cos(2*a)/math.cos(a)*radius*0.3; offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Cissoid" then local a=frac*math.pi*1.8-math.pi*0.9+0.05; local rr=2*math.sin(a)^2/math.cos(a)*radius*0.15; offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Conchoid" then local a=frac*math.pi*1.8-math.pi*0.9+0.05; local rr=(1/math.cos(a)+radius*0.25)*radius*0.15; offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Viviani" then offset=Vector3.new(radius*(1+math.cos(ph))*0.5,radius*math.sin(ph)*0.5,radius*math.sin(ph/2)*0.5)
+            elseif order=="Maclaurin" then local rr=radius*0.5*(2*math.cos(ph)-1); offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Trisectrix" then local a=frac*math.pi*1.6-math.pi*0.8+0.01; local rr=radius*0.5*(4*math.cos(a)-1/math.cos(a)); offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Kappa" then local a=frac*math.pi*1.6-math.pi*0.8+0.01; local rr=radius*math.cos(a)/math.sin(a)^2*0.3; offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Lituus" then local a=frac*math.pi*6+0.01; local rr=radius/math.sqrt(a); offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Trochoid" then local a=frac*math.pi*4; offset=Vector3.new(a*radius*0.06,radius*(1-1.5*math.cos(a))*0.25,0)
+            elseif order=="Epitrochoid" then local R=radius; local r=radius*0.4; local d=radius*0.6; offset=Vector3.new((R+r)*math.cos(ph)-d*math.cos((R/r+1)*ph),0,(R+r)*math.sin(ph)-d*math.sin((R/r+1)*ph))
+            elseif order=="Hypotrochoid" then local R=radius; local r=radius*0.4; local d=radius*0.7; offset=Vector3.new((R-r)*math.cos(ph)+d*math.cos((R/r-1)*ph),0,(R-r)*math.sin(ph)-d*math.sin((R/r-1)*ph))
+            elseif order=="Vortex" then offset=Vector3.new(math.cos(ph*3)*radius,math.sin(ph*3)*radius,math.sin(ph*1.5)*radius)
+            elseif order=="Lemniscate3D" then local d=1+math.sin(ph)^2; offset=Vector3.new(math.cos(ph)/d*radius,math.sin(ph)*radius*0.3,math.sin(ph)*math.cos(ph)/d*radius)
+            elseif order=="Spirograph" then local R=radius*0.7; local r=radius*0.3; local d=radius*0.5; offset=Vector3.new((R-r)*math.cos(ph)+d*math.cos((R/r-1)*ph),math.sin(ph*3)*radius*0.2,(R-r)*math.sin(ph)-d*math.sin((R/r-1)*ph))
+            elseif order=="Rhodonea6" then local rr=math.cos(6*ph)*radius; offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Rhodonea8" then local rr=math.cos(8*ph)*radius; offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="EpiSpiral" then local n=3; local rr=radius/(math.cos(n*ph)+0.01)*0.3; offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="HypoSpiral" then local n=4; local a=frac*math.pi*8; local rr=(1-frac)*radius; offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Kampyle" then local a=frac*math.pi*1.4-math.pi*0.7+0.01; local rr=radius/(math.cos(a)^2+0.01)*0.2; offset=Vector3.new(rr*math.cos(a),0,rr*math.sin(a))
+            elseif order=="Bicorn" then local rr=radius*math.sin(ph)^2*(2+math.cos(ph))/(3+math.sin(ph)^2+0.001); offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Pearce" then local rr=radius*(1+0.5*math.cos(ph))*0.8; offset=Vector3.new(rr*math.cos(ph),math.sin(ph*2)*radius*0.2,rr*math.sin(ph))
+            elseif order=="Scarabaeus" then local rr=(math.cos(2*ph)-2*math.cos(ph))*radius*0.4; offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Dumbbell" then local rr=math.cos(ph)^2*radius; offset=Vector3.new(rr*math.cos(ph),math.sin(ph*4)*radius*0.15,rr*math.sin(ph))
+            elseif order=="Teardrop" then local rr=radius*(1-math.cos(ph))*0.6; offset=Vector3.new(rr*math.cos(ph),math.sin(ph)*radius*0.3,rr*math.sin(ph))
+            elseif order=="Talbot" then local a2=radius*0.6; local b2=radius*0.4; local rr=math.sqrt(a2^2*math.cos(ph)^2+b2^2*math.sin(ph)^2); offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Watt" then local rr=radius*(0.8+0.2*math.cos(2*ph)); offset=Vector3.new(rr*math.cos(ph),math.sin(ph*6)*radius*0.1,rr*math.sin(ph))
+            elseif order=="Anguinea" then offset=Vector3.new(math.sin(ph)*radius,math.sin(2*ph)*radius*0.5,math.cos(ph)*radius*0.5)
+            elseif order=="Squircle" then local s=_sign(math.cos(ph))*math.abs(math.cos(ph))^(2/3)*radius; local t2=_sign(math.sin(ph))*math.abs(math.sin(ph))^(2/3)*radius; offset=Vector3.new(s,0,t2)
+            elseif order=="Superellipse" then local n=2.5; local s=_sign(math.cos(ph))*math.abs(math.cos(ph))^(2/n)*radius; local t2=_sign(math.sin(ph))*math.abs(math.sin(ph))^(2/n)*radius; offset=Vector3.new(s,0,t2)
+            elseif order=="Lame" then local n=4; local s=_sign(math.cos(ph))*math.abs(math.cos(ph))^(2/n)*radius; local t2=_sign(math.sin(ph))*math.abs(math.sin(ph))^(2/n)*radius; offset=Vector3.new(s,math.sin(ph*4)*radius*0.1,t2)
+            elseif order=="Astroid3D" then offset=Vector3.new(math.cos(ph)^3*radius,math.sin(ph*2)*radius*0.4,math.sin(ph)^3*radius)
+            elseif order=="Nephroid3D" then offset=Vector3.new((3*math.cos(ph)-math.cos(3*ph))*radius*0.25,math.sin(ph*2)*radius*0.3,(3*math.sin(ph)-math.sin(3*ph))*radius*0.25)
+            elseif order=="Cruciform" then local rr=radius/(math.cos(ph)*math.sin(ph)+0.01)*0.2; offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Piriform" then local rr=radius*0.6*(1+math.sin(ph))*math.cos(ph); offset=Vector3.new(rr,math.sin(ph*3)*radius*0.15,radius*0.6*(1+math.sin(ph))*math.sin(ph))
+            elseif order=="CockedHat" then local rr=radius*(2*(1+math.cos(ph))*0.5-0.5); offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Tschirnhaus" then local a=frac*math.pi*4; offset=Vector3.new(a*radius*0.05,radius*a^2*0.002,0)
+            elseif order=="Torpedo" then local rr=radius*math.sin(ph)^2*math.cos(ph); offset=Vector3.new(rr,math.cos(ph*4)*radius*0.15,radius*math.sin(ph)^3)
+            elseif order=="Seashell" then local a=frac*math.pi*4; local rr=(1-frac)*radius; offset=Vector3.new(rr*math.cos(a),frac*radius*2-radius,rr*math.sin(a))
+            elseif order=="Knot" then local a=frac*math.pi*2; offset=Vector3.new((2+math.cos(3*a))*math.cos(2*a)*radius*0.3,(2+math.cos(3*a))*math.sin(2*a)*radius*0.3,math.sin(3*a)*radius*0.3)
+            elseif order=="Torus" then local a=frac*math.pi*2*5; local b=frac*math.pi*2; local R=radius*0.7; local r=radius*0.3; offset=Vector3.new((R+r*math.cos(b))*math.cos(a),r*math.sin(b),(R+r*math.cos(b))*math.sin(a))
+            elseif order=="Pretzel" then local a=frac*math.pi*4; offset=Vector3.new(math.cos(a)*radius*(1+0.5*math.cos(3*a/2)),math.sin(a)*radius*0.4,radius*0.5*math.sin(3*a/2))
+            elseif order=="Spring" then local a=frac*math.pi*2*8; offset=Vector3.new(math.cos(a)*radius*0.6,frac*radius*2-radius,math.sin(a)*radius*0.6)
+            elseif order=="DNA" then local a=frac*math.pi*2*5; local x1=math.cos(a)*radius; local z1=math.sin(a)*radius; local x2=math.cos(a+math.pi)*radius; local z2=math.sin(a+math.pi)*radius; local strand=(i%2==0) and 1 or -1; offset=Vector3.new(strand>0 and x1 or x2,frac*radius*2-radius,strand>0 and z1 or z2)
+            elseif order=="Mobius" then local a=ph; local b=frac*math.pi; offset=Vector3.new((1+b*0.5*math.cos(a/2))*math.cos(a)*radius*0.5,b*0.5*math.sin(a/2)*radius*0.5,(1+b*0.5*math.cos(a/2))*math.sin(a)*radius*0.5)
+            elseif order=="Lorenz" then local x=math.sin(frac*math.pi*2)*radius*0.5; local y=math.cos(frac*math.pi*3)*radius*0.3; local z2=math.sin(frac*math.pi*5+math.pi)*radius*0.5; offset=Vector3.new(x,y,z2)
+            elseif order=="Lissajous" then local a=3; local b2=2; local delta=math.pi/4; offset=Vector3.new(math.sin(a*frac*math.pi*2+delta)*radius,math.cos(frac*math.pi*2)*radius*0.4,math.sin(b2*frac*math.pi*2)*radius)
+            elseif order=="Bowditch" then local a=5; local b2=4; offset=Vector3.new(math.sin(a*frac*math.pi*2)*radius,math.cos(b2*frac*math.pi*2)*radius,(math.sin((a+b2)*frac*math.pi))*radius*0.5)
+            elseif order=="Hypocycloid3" then local R=radius; local r=radius/3; offset=Vector3.new((R-r)*math.cos(ph)+r*math.cos((R/r-1)*ph),0,(R-r)*math.sin(ph)-r*math.sin((R/r-1)*ph))
+            elseif order=="Hypocycloid5" then local R=radius; local r=radius/5; offset=Vector3.new((R-r)*math.cos(ph)+r*math.cos((R/r-1)*ph),0,(R-r)*math.sin(ph)-r*math.sin((R/r-1)*ph))
+            elseif order=="Epicycloid3" then local R=radius*0.6; local r=radius*0.2; offset=Vector3.new((R+r)*math.cos(ph)-r*math.cos((R/r+1)*ph),0,(R+r)*math.sin(ph)-r*math.sin((R/r+1)*ph))
+            elseif order=="Epicycloid5" then local R=radius*0.7; local r=radius*0.14; offset=Vector3.new((R+r)*math.cos(ph)-r*math.cos((R/r+1)*ph),0,(R+r)*math.sin(ph)-r*math.sin((R/r+1)*ph))
+            elseif order=="Gear12" then local rr=radius*(1+0.15*math.cos(12*ph)); offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Gear20" then local rr=radius*(1+0.1*math.cos(20*ph)); offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Sunray" then local rr=radius*(0.6+0.4*math.abs(math.cos(ph*8))); offset=Vector3.new(rr*math.cos(ph),0,rr*math.sin(ph))
+            elseif order=="Atomic" then offset=Vector3.new(math.cos(ph)*radius*0.8,math.sin(3*ph)*radius*0.4,math.sin(ph)*radius*0.8)
+            elseif order=="Pulsar" then local rr=radius*(0.5+0.5*math.sin(ph*13)); offset=Vector3.new(rr*math.cos(ph),math.cos(ph*5)*radius*0.3,rr*math.sin(ph))
+            elseif order=="Ripple" then local a=frac*math.pi*2*5; local r=frac*radius; offset=Vector3.new(r*math.cos(a),math.sin(r*0.1)*radius*0.5,r*math.sin(a))
+            elseif order=="Pyramid" then local level=math.floor(frac*4); local f2=(frac*4)-level; local h=level/4*radius; local base2=radius*(1-level/4); local a1=(level%4/4)*math.pi*2; local a2=((level%4+1)/4)*math.pi*2; offset=Vector3.new(math.cos(a1)*base2,h,math.sin(a1)*base2):Lerp(Vector3.new(math.cos(a2)*base2*(1-f2),h,math.sin(a2)*base2*(1-f2)),f2)
+            elseif order=="Prism" then local side=math.floor(frac*6); local sf=(frac*6)-side; local a1=(side/6)*math.pi*2; local a2=((side+1)/6)*math.pi*2; local y2=side<3 and -radius*0.5 or radius*0.5; offset=Vector3.new(math.cos(a1)*radius,y2,math.sin(a1)*radius):Lerp(Vector3.new(math.cos(a2)*radius,y2,math.sin(a2)*radius),sf)
+            elseif order=="Cube3D" then local edges=12; local edge=math.floor(frac*edges); local ef=(frac*edges)-edge; local s=radius*0.7; local pts={{Vector3.new(-s,-s,-s),Vector3.new(s,-s,-s)},{Vector3.new(s,-s,-s),Vector3.new(s,s,-s)},{Vector3.new(s,s,-s),Vector3.new(-s,s,-s)},{Vector3.new(-s,s,-s),Vector3.new(-s,-s,-s)},{Vector3.new(-s,-s,s),Vector3.new(s,-s,s)},{Vector3.new(s,-s,s),Vector3.new(s,s,s)},{Vector3.new(s,s,s),Vector3.new(-s,s,s)},{Vector3.new(-s,s,s),Vector3.new(-s,-s,s)},{Vector3.new(-s,-s,-s),Vector3.new(-s,-s,s)},{Vector3.new(s,-s,-s),Vector3.new(s,-s,s)},{Vector3.new(s,s,-s),Vector3.new(s,s,s)},{Vector3.new(-s,s,-s),Vector3.new(-s,s,s)}}; local ei=math.clamp(edge+1,1,#pts); offset=pts[ei][1]:Lerp(pts[ei][2],ef)
+            elseif order=="Octahedron" then local b2=frac*math.pi; offset=Vector3.new(math.sin(b2)*math.cos(ph)*radius,math.cos(b2)*radius,math.sin(b2)*math.sin(ph)*radius)
+            elseif order=="Tesseract" then local b2=frac*math.pi*4; local x=math.cos(ph)*radius; local y=math.sin(ph)*radius; local z2=math.cos(b2)*radius*0.5; local w=math.sin(b2)*radius*0.5; offset=Vector3.new(x+w*0.3,y+w*0.3,z2)
+            elseif order=="Vortex3D" then local a=frac*math.pi*2*5; local r=(1-frac)*radius; offset=Vector3.new(r*math.cos(a),frac*radius*2-radius,r*math.sin(a))
+            elseif order=="Helix4" then local a=frac*math.pi*2*4; offset=Vector3.new(math.cos(a)*radius*0.7,frac*radius*2-radius,math.sin(a)*radius*0.7)
+            elseif order=="Corkscrew" then local a=frac*math.pi*2*6; local r=radius*(0.5+0.5*math.sin(a*0.5)); offset=Vector3.new(r*math.cos(a),frac*radius*2-radius,r*math.sin(a))
+            elseif order=="Twister" then local a=frac*math.pi*2*3; local r=radius*(1-frac*0.5); offset=Vector3.new(r*math.cos(a)+math.sin(a*7)*radius*0.2,frac*radius*2-radius,r*math.sin(a)+math.cos(a*5)*radius*0.2)
+            elseif order=="Whirlpool" then local a=frac*math.pi*2*5; local r=(1-frac)*radius; offset=Vector3.new(r*math.cos(a),math.sin(frac*math.pi*2)*radius*0.5,r*math.sin(a))
+            elseif order=="Cyclone" then local a=frac*math.pi*2*4; local r=radius*(0.2+0.8*frac); offset=Vector3.new(r*math.cos(a),(1-frac)*radius*2-radius,r*math.sin(a))
+            elseif order=="Tornado3D" then local a=frac*math.pi*2*6; local r=frac*radius; offset=Vector3.new(r*math.cos(a)+math.random(-1,1)*radius*0.05,frac*radius*2-radius,r*math.sin(a)+math.random(-1,1)*radius*0.05)
+            elseif order=="Storm" then local a=frac*math.pi*2*4; local r=radius*(0.3+0.7*math.sin(frac*math.pi)^2); offset=Vector3.new(r*math.cos(a),math.sin(frac*math.pi*3)*radius*0.6,r*math.sin(a))
+            elseif order=="Chaos3D" then local a=frac*math.pi*7; local b2=frac*math.pi*11; local c=frac*math.pi*13; offset=Vector3.new(math.sin(a)*math.cos(b2)*radius,math.sin(b2)*math.sin(c)*radius*0.7,math.cos(a)*math.cos(c)*radius)
+            elseif order=="Nova" then local rr=radius*(0.5+0.5*math.sin(ph*17))*(1+0.3*math.cos(ph*5)); offset=Vector3.new(rr*math.cos(ph),math.sin(ph*7)*radius*0.3,rr*math.sin(ph))
+            else offset=Vector3.new(math.cos(ph)*radius,0,math.sin(ph)*radius) end
+            return offset
+        end
+
+        local vs_conn, last_vs_pos = nil, nil
+        M.start_void_spam = function()
+            if vs_conn then return end
+            local dt_buf = 0
+            vs_conn = run_service.Heartbeat:Connect(function(dt)
+                if not config.void_spam_enabled then M.stop_void_spam() return end
+                for _, o in ipairs(workspace:GetChildren()) do if o.Name == "CoreProjectile" and o:IsA("BasePart") then o.CFrame = CFrame.new(999999, 999999, 999999); o.AssemblyLinearVelocity = Vector3.zero end end
+                local hrp = M.get_hrp(localplayer); local hum = localplayer.Character and localplayer.Character:FindFirstChildOfClass("Humanoid")
+                if not hrp or not hum or hum.Health <= 0 then return end
+                if hum:GetState() ~= Enum.HumanoidStateType.Physics then hum:ChangeState(Enum.HumanoidStateType.Physics) end
+                dt_buf = dt_buf + dt
+                if dt_buf >= 0.001 then
+                    local iters = math.clamp(config.et_total or 1000, 1, 500)
+                    for i = 1, iters do
+                        local frac = (i-1)/iters; local ph = frac * math.pi * 2; local radius = 50000
+                        local offset = get_vs_order_offset(config.et_order or "Triangle", frac, i, ph, radius)
+                        local finalPos = last_vs_pos or hrp.Position; local mode = config.et_mode or "Random"
+                        if mode == "Random" then finalPos = hrp.Position + offset + Vector3.new(math.random(-500,500),math.random(-500,500),math.random(-500,500))
+                        elseif mode == "Camera" then local cam = workspace.CurrentCamera; if cam then finalPos = cam.CFrame.Position + (cam.CFrame.LookVector * radius) + offset end
+                        elseif mode == "Forward" then finalPos = hrp.Position + (hrp.CFrame.LookVector * radius) + offset
+                        elseif mode == "Directional" then local raw_delta = get_vs_delta(dt, config.vs_xp, config.vs_xn, config.vs_yp, config.vs_yn, config.vs_zp, config.vs_zn); local dir = raw_delta.Unit; if dir.Magnitude == dir.Magnitude then finalPos = finalPos + (dir * (config.vs_dist_per_tp or 1000)) end end
+                        last_vs_pos = finalPos; hrp.CFrame = CFrame.new(finalPos)
+                    end
+                    hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero; dt_buf = 0
+                end
+            end)
+        end
+        M.stop_void_spam = function() if vs_conn then vs_conn:Disconnect(); vs_conn = nil end; config.void_spam_enabled = false; last_vs_pos = nil end
+
+        local function get_hitbox_part(char)
+            local hb=config.rage_hitbox; local part=nil
+            if hb=="Head" then part=char:FindFirstChild("Head")
+            elseif hb=="Upper torso" then part=char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+            elseif hb=="HumanoidRootPart" then part=char:FindFirstChild("HumanoidRootPart")
+            elseif hb=="Lower torso" then part=char:FindFirstChild("LowerTorso") or char:FindFirstChild("Torso")
+            elseif hb=="Right arm" then part=char:FindFirstChild("RightUpperArm") or char:FindFirstChild("Right Arm")
+            elseif hb=="Left arm" then part=char:FindFirstChild("LeftUpperArm") or char:FindFirstChild("Left Arm")
+            elseif hb=="Right leg" then part=char:FindFirstChild("RightUpperLeg") or char:FindFirstChild("Right Leg")
+            elseif hb=="Left leg" then part=char:FindFirstChild("LeftUpperLeg") or char:FindFirstChild("Left Leg") end
+            return part or char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+        end
+        local function get_weapon_slot() if config.rage_weapon=="None" then return nil end return config.rage_weapon=="Primary" and 1 or 2 end
+        local function equip_slot()
+            local f_ctrl=localplayer.PlayerScripts.Controllers:FindFirstChild("FighterController")
+            if f_ctrl then
+                local lf=require(f_ctrl).LocalFighter
+                if lf then
+                    local w=get_weapon_slot(); if config.rage_type=="Normal" then w=3 end
+                    if w then pcall(function() if lf.EquipItem then lf:EquipItem(w) end if lf.SwitchToSlot then lf:SwitchToSlot(w) end end) end
+                end
+            end
+        end
+        local predict_vel=Vector3.zero; local predict_lastpos=nil; local predict_lasttime=0
+        run_service.Heartbeat:Connect(function()
+            if not config.prediction_enabled or not M.rb_target then predict_vel=Vector3.zero; predict_lastpos=nil; return end
+            local root=M.rb_target.Character and M.rb_target.Character:FindFirstChild("HumanoidRootPart"); if not root then return end
+            local now=tick(); local dt=now-predict_lasttime
+            if dt>0 and dt<0.1 then
+                local cur=root.Position
+                if predict_lastpos then local inst=(cur-predict_lastpos)/dt; predict_vel=predict_vel:Lerp(inst,0.6) end
+                predict_lastpos=cur; predict_lasttime=now
+            end
+        end)
+        local function predict_target(targetpart,origin)
+            if not config.prediction_enabled or not targetpart then return targetpart and targetpart.Position or Vector3.zero end
+            local dist=(targetpart.Position-origin).Magnitude; local ping=localplayer:GetNetworkPing()
+            return targetpart.Position+(predict_vel*((dist/3000+ping)*(config.prediction_mult or 1.2)))
+        end
+        local tp_pred_history={}; local tp_pred_vel=Vector3.zero; local tp_pred_lasttime=0; local tp_pred_lastpos=nil
+        run_service.Heartbeat:Connect(function()
+            if not config.tp_prediction_enabled or not M.rb_target then tp_pred_history={}; tp_pred_vel=Vector3.zero; tp_pred_lastpos=nil; return end
+            local root=M.rb_target.Character and M.rb_target.Character:FindFirstChild("HumanoidRootPart"); if not root then return end
+            local now=tick(); local dt=now-tp_pred_lasttime
+            if dt>0 and dt<0.2 then
+                local cur=root.Position
+                if tp_pred_lastpos then
+                    local inst=(cur-tp_pred_lastpos)/dt
+                    if inst.Magnitude<50000 then
+                        table.insert(tp_pred_history,inst); if #tp_pred_history>16 then table.remove(tp_pred_history,1) end
+                        local avg=Vector3.zero; local ws=0; for idx,v in ipairs(tp_pred_history) do local w=idx/#tp_pred_history; avg=avg+v*w; ws=ws+w end
+                        if ws>0 then tp_pred_vel=avg/ws end
+                    end
+                end
+                tp_pred_lastpos=cur; tp_pred_lasttime=now
+            end
+        end)
+        local function tp_predict_pos(t_hrp)
+            if not config.tp_prediction_enabled or not t_hrp then return t_hrp and t_hrp.Position or Vector3.zero end
+            local ping=localplayer:GetNetworkPing(); local strength=config.tp_pred_strength or 1.0
+            return t_hrp.Position+tp_pred_vel*((ping*4+0.05)*strength)
+        end
+        local function fire_autoshoot(t_head,t_char)
+            task.spawn(function()
+                pcall(function()
+                    local util=require(r_storage:WaitForChild("Modules",2):WaitForChild("Utility",2))
+                    local enums=require(r_storage:WaitForChild("Modules",2):WaitForChild("EnumLibrary",2))
+                    local f_ctrl=require(localplayer.PlayerScripts.Controllers:WaitForChild("FighterController",2))
+                    if not util or not enums or not f_ctrl then return end
+                    if f_ctrl.LocalFighter and f_ctrl.LocalFighter.EquippedItem then
+                        local item=f_ctrl.LocalFighter.EquippedItem; local cam_pos=workspace.CurrentCamera.CFrame.Position
+                        local atp=predict_target(t_head,cam_pos); local c_data={}
+                        c_data[utf8.char(1)]={[utf8.char(0)]=util:EncodeCFrame(CFrame.lookAt(cam_pos,atp)),[utf8.char(1)]=util:EncodeCFrame(CFrame.lookAt(cam_pos,atp)),[utf8.char(2)]=t_head,[utf8.char(3)]=util:EncodeCFrame(t_head.CFrame:ToObjectSpace(CFrame.new(atp)))}
+                        c_data.Hitbox=t_head.Name
+                        for _=1,(config.shoot_attempts or 1) do r_storage.Remotes.Replication.Fighter.UseItem:FireServer(item:Get("ObjectID"),enums:ToEnum("StartShooting"),c_data,nil) end
+                    end
+                end)
+            end)
+        end
+        M.fire_autoshoot=fire_autoshoot
+        local rb_last_shot=0
+        local function _vec3_finite(v) return v.X==v.X and v.Y==v.Y and v.Z==v.Z and math.abs(v.X)~=math.huge and math.abs(v.Y)~=math.huge and math.abs(v.Z)~=math.huge end
+        local function get_rage_offset(strat, t_hrp, base_pos)
+            local look = t_hrp.CFrame.LookVector; if look.Magnitude < 0.001 then look = Vector3.new(0, 0, -1) end
+            local offset = Vector3.zero; local wild = CFrame.Angles(0, 0, 0)
+            if strat == "Orbit" then
+                local spin_rad = tick() * (config.rage_orbit_speed or 500) / 100; local radius = math.max(config.rage_tp_radius or 5, 1); local height = config.rage_tp_height or -4
+                offset = Vector3.new(math.cos(spin_rad)*radius, height, math.sin(spin_rad)*radius)
+                wild = CFrame.lookAt(Vector3.zero, Vector3.new(math.cos(spin_rad+math.pi),0,math.sin(spin_rad+math.pi)))
+            else
+                local pos_mode = string.lower(config.rage_position or "inside"); local pos_dist = config.rage_tp_radius or 2
+                if pos_mode == "front" then offset = look*pos_dist elseif pos_mode == "behind" then offset = -look*pos_dist elseif pos_mode == "above" then offset = Vector3.new(0, math.abs(config.rage_tp_height or 15)+5, 0) elseif pos_mode == "below" then offset = Vector3.new(0, -(math.abs(config.rage_tp_height or 4)+2), 0) end
+                local mode = config.rage_type or "Melee"
+                if mode == "Gun" then offset = Vector3.new(0, math.max(config.rage_tp_height or 15, 5), 0) elseif mode == "Knife" then offset = -look*(config.knife_dist or 3) end
+                if config.rage_spin then local t = tick(); wild = CFrame.Angles(math.rad(1e70*t*1.0 % 360),math.rad(1e70*t*0.73 % 360),math.rad(1e70*t*0.41 % 360)) end
+            end
+            return offset, wild
+        end
+        local function snap_to_target(dt)
+            if not config.rage_bot_enabled then return end
+            local target = M.get_rage_target(); M.rb_target = target
+            local hrp = M.get_hrp(localplayer); if not (target and target.Character and hrp) then return end
+            if localplayer.Team and target.Team and localplayer.Team == target.Team then return end
+            local target_part = get_hitbox_part(target.Character); local t_hrp = target.Character:FindFirstChild("HumanoidRootPart")
+            if not (target_part and t_hrp) then return end
+            local hum = localplayer.Character and localplayer.Character:FindFirstChildOfClass("Humanoid"); if hum then pcall(function() hum:ChangeState(Enum.HumanoidStateType.Physics) end) end
+            local strat = config.rage_strategy or "Orbit"; local raw_base
+            if config.tp_prediction_enabled then raw_base = tp_predict_pos(t_hrp); if not _vec3_finite(raw_base) then raw_base = t_hrp.Position end else raw_base = t_hrp.Position end
+            if not _vec3_finite(raw_base) then raw_base = t_hrp.Position end
+            if not _vec3_finite(raw_base) then return end
+            local offset, wild = get_rage_offset(strat, t_hrp, raw_base)
+            local dest_pos = raw_base + offset; if not _vec3_finite(dest_pos) then dest_pos = raw_base end
+            if not _vec3_finite(dest_pos) then return end
+            hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
+            pcall(function() hrp.CFrame = CFrame.new(dest_pos.X, dest_pos.Y, dest_pos.Z) * wild end)
+            hrp.AssemblyLinearVelocity = Vector3.zero; hrp.AssemblyAngularVelocity = Vector3.zero
+        end
+        local function snap_and_shoot(dt)
+            if not config.rage_bot_enabled then return end
+            snap_to_target(dt); equip_slot()
+            local target = M.rb_target; if not (target and target.Character) then return end
+            local target_part = get_hitbox_part(target.Character); local is_immune = target.Character:FindFirstChildOfClass("ForceField")
+            if not target_part then return end
+            local mode = config.rage_type or "Normal"
+            if mode == "Knife" then workspace.CurrentCamera.CFrame = CFrame.lookAt(workspace.CurrentCamera.CFrame.Position, target_part.Position) end
+            if mode ~= "Knife" and not is_immune and tick() - rb_last_shot > 0.05 then rb_last_shot = tick(); fire_autoshoot(target_part, target.Character) end
+        end
+        M.__ragebot_start = function()
+            run_service:BindToRenderStep("RageSnapPosition", Enum.RenderPriority.Camera.Value + 2, function(dt) if not config.rage_bot_enabled then return end; snap_to_target(dt) end)
+            run_service:BindToRenderStep("RageSnapShoot", Enum.RenderPriority.Camera.Value + 1, function(dt) if not config.rage_bot_enabled then return end; snap_and_shoot(dt) end)
+        end
+        M.__ragebot_stop = function()
+            config.rage_bot_enabled = false
+            pcall(function() run_service:UnbindFromRenderStep("RageSnapPosition") end); pcall(function() run_service:UnbindFromRenderStep("RageSnapShoot") end)
+            M.rb_target = nil
+        end
+        local function tgl(section, name, desc, cb) section:toggle({ name = name, default = false, callback = function(v) pcall(cb, v) end }) end
+        pcall(function()
+            local rb = cols.ragebot:section({ name = "Ragebot" })
+            tgl(rb, "Ragebot", "Targets enemies based on mode.", function(v) config.rage_bot_enabled = v; if v then M.__ragebot_start() else M.__ragebot_stop() end end)
+            rb:dropdown({ name = "Attack Mode", items = { "Melee", "Gun", "Knife" }, default = "Melee", callback = function(v) config.rage_type = v end })
+            rb:dropdown({ name = "Ragebot Strategy", items = { "Orbit", "TP" }, default = "Orbit", callback = function(v) config.rage_strategy = v end })
+            rb:dropdown({ name = "Weapon", items = { "None", "Primary", "Secondary" }, default = "None", callback = function(v) config.rage_weapon = v end })
+            rb:dropdown({ name = "Targeting", items = { "Head", "Upper torso", "HumanoidRootPart", "Lower torso", "Right arm", "Left arm", "Right leg", "Left leg" }, default = "Head", callback = function(v) config.rage_hitbox = v end })
+            rb:dropdown({ name = "Position", items = { "Front", "Behind", "Above", "Below", "Inside" }, default = "Inside", callback = function(v) config.rage_position = v end })
+            local function playerList() local list = { '' }; for _, p in ipairs(players:GetPlayers()) do if p ~= localplayer then list[#list+1] = p.Name end end; return list end
+            local prioDropdown = rb:dropdown({ name = "Priority", items = playerList(), default = "", callback = function(v) config.rage_priority = v or '' end })
+            local function refreshPrio() pcall(function() prioDropdown:SetItems(playerList()) end) end
+            conns[#conns+1] = players.PlayerAdded:Connect(refreshPrio); conns[#conns+1] = players.PlayerRemoving:Connect(function() task.defer(refreshPrio) end)
+            rb:slider({ name = "Shoot Attempts", min = 1, max = 3, interval = 1, default = 1, callback = function(v) config.shoot_attempts = v end })
+            tgl(rb, "Bullet Prediction", "Predicts where the enemy will go.", function(v) config.prediction_enabled = v end)
+            rb:slider({ name = "Prediction Multiplier", min = 0.1, max = 3.0, interval = 0.1, default = 1.2, callback = function(v) config.prediction_mult = v end })
+            tgl(rb, "Teleport Prediction", "Predicts where to teleport.", function(v) config.tp_prediction_enabled = v end)
+            rb:slider({ name = "Prediction Strength", min = 0.1, max = 5.0, interval = 0.1, default = 1.0, callback = function(v) config.tp_pred_strength = v end })
+            local ra = cols.ragebot:section({ name = "Adjustments" })
+            ra:slider({ name = "TP Radius", min = 0, max = 100, interval = 1, default = 2, callback = function(v) config.rage_tp_radius = v end })
+            ra:slider({ name = "TP Height", min = -100, max = 100, interval = 1, default = -4, callback = function(v) config.rage_tp_height = v end })
+            ra:slider({ name = "Orbit Speed", min = 10, max = 5000, interval = 1, default = 500, callback = function(v) config.rage_orbit_speed = v end })
+            ra:slider({ name = "Knife Distance Behind", min = 1, max = 10, interval = 1, default = 3, callback = function(v) config.knife_dist = v end })
+            tgl(ra, "Spin", "Rotates at extremely high velocity.", function(v) config.rage_spin = v end)
+            local ev = cols.evasion:section({ name = "Evasion" })
+            tgl(ev, "Evasion", "Spins and teleports rapidly across the map.", function(v) config.evasion_enabled = v; if v then M.start_evasion() else M.stop_evasion() end end)
+            ev:dropdown({ name = "Evasion Mode", default = "Random", items = { "Random","Circle","Spiral","Figure8","Helix","Star","Triangle","Square","Pentagon","Hexagon", "Octagon","Diamond","Cross","Zigzag","Wave","Sine","Lemniscate","Rose","Butterfly","Cardioid", "Epicycloid","Hypocycloid","Hypotrochoid","Epitrochoid","Fermat","Archimedes","Lituus","Cissoid", "Strophoid","Limacon","Astroid","Deltoid","Nephroid","Trefoil","Viviani","Rhodonea","Maclaurin", "Trisectrix","Folium","Cochleoid","Involute" }, callback = function(v) config.evasion_mode = v end })
+            ev:slider({ name = "Burst Count", min = 100, max = 1000, interval = 1, default = 500, callback = function(v) config.evasion_burst = v end })
+            ev:slider({ name = "Interval", min = 1, max = 1000, interval = 1, default = 1, callback = function(v) config.evasion_interval = v end })
+            ev:slider({ name = "Spin Speed", min = 0, max = 999999, interval = 1, default = 9999, callback = function(v) config.evasion_spin_speed = v end })
+            local aa = cols.evasion:section({ name = "Anti Aim" })
+            tgl(aa, "Anti Aim", "Scrambles orientation to reduce hitbox accuracy.", function(v) config.anti_aim_enabled = v; if v then M.start_anti_aim() else M.stop_anti_aim() end end)
+            aa:dropdown({ name = "Anti Aim Method", items = { "Pixelated","Static","Spin","Jitter","Desync","Sway","Breaker","Lurk","Orbit","Custom" }, default = "Static", callback = function(v) config.aa_method = v end })
+            aa:slider({ name = "Pixelation Scale", min = 0, max = 100, interval = 1, default = 0, callback = function(v) config.aa_pixel_scale = v end })
+            aa:slider({ name = "Spin Speed", min = 100, max = 999999, interval = 1, default = 9999, callback = function(v) config.aa_spin_speed = v end })
+            aa:slider({ name = "Yaw", min = 0, max = 180, interval = 1, default = 0, callback = function(v) config.aa_yaw = v end })
+            aa:slider({ name = "Pitch", min = 0, max = 180, interval = 1, default = 0, callback = function(v) config.aa_pitch = v end })
+            aa:slider({ name = "Roll", min = 0, max = 180, interval = 1, default = 0, callback = function(v) config.aa_roll = v end })
+
+            -- === Anti Knife ===
+            local AK = { on = false, range = 14, retreat = 18, onlyMelee = true, cool = 0 }
+            local MELEE_NAMES = { 'knife','katana','sword','axe','scythe','chainsaw','fists','dagger','hammer','bat','spear','blade' }
+            local function akIsMelee(n) n = tostring(n or ''):lower(); for _,k in ipairs(MELEE_NAMES) do if n:find(k,1,true) then return true end end return false end
+            local function akWeapon(plr)
+                local w = ''
+                pcall(function()
+                    local m = require(localplayer.PlayerScripts.Controllers.FighterController)
+                    local f = m._player_to_fighter and m._player_to_fighter[plr]
+                    if f and f.EquippedItem and f.EquippedItem.Info then w = f.EquippedItem.Info.Name end
+                end)
+                return w
+            end
+            local function akRetreat(root, threat)
+                local away = root.Position - threat.Position
+                away = Vector3.new(away.X, 0, away.Z)
+                if away.Magnitude < 0.1 then away = Vector3.new(1, 0, 0) end
+                away = away.Unit
+                local rp = RaycastParams.new(); rp.FilterType = Enum.RaycastFilterType.Exclude
+                rp.FilterDescendantsInstances = { localplayer.Character }
+                for _, m in ipairs({ 1, 0.7, 0.45 }) do
+                    local dist = AK.retreat * m
+                    if not workspace:Raycast(root.Position, away * dist, rp) then
+                        local t = root.Position + away * dist
+                        local g = workspace:Raycast(t + Vector3.new(0,5,0), Vector3.new(0,-80,0), rp)
+                        if g then
+                            root.CFrame = CFrame.new(g.Position + Vector3.new(0,3,0)) * root.CFrame.Rotation
+                            root.AssemblyLinearVelocity = Vector3.zero
+                            return true
+                        end
+                    end
+                end
+                return false
+            end
+            local function akStep()
+                local ch = localplayer.Character
+                local root = ch and ch:FindFirstChild('HumanoidRootPart')
+                local hum = ch and ch:FindFirstChildOfClass('Humanoid')
+                if not (root and hum and hum.Health > 0) then return end
+                local closest, cd = nil, AK.range
+                for _, plr in ipairs(players:GetPlayers()) do
+                    if plr ~= localplayer and plr.Character then
+                        local t = plr.Character:FindFirstChild('HumanoidRootPart')
+                        local h = plr.Character:FindFirstChildOfClass('Humanoid')
+                        if t and h and h.Health > 0 then
+                            local sameTeam = localplayer.Team and plr.Team and localplayer.Team == plr.Team
+                            if not sameTeam then
+                                local d = (t.Position - root.Position).Magnitude
+                                if d <= cd then
+                                    local ok = true
+                                    if AK.onlyMelee then ok = akIsMelee(akWeapon(plr)) end
+                                    if ok then closest, cd = t, d end
+                                end
+                            end
+                        end
+                    end
+                end
+                if closest and akRetreat(root, closest) then AK.cool = tick() + 0.35 end
+            end
+            RunSvc.Heartbeat:Connect(function(dt)
+                if not AK.on then return end
+                if tick() < AK.cool then return end
+                pcall(akStep)
+            end)
+            local akSec = cols.evasion:section({ name = "Anti Knife" })
+            akSec:toggle({ name = "Anti knife", default = false, callback = function(v) AK.on = v end })
+            akSec:slider({ name = "Trigger range", min = 5, max = 40, interval = 1, default = 14, suffix = " studs", callback = function(v) AK.range = v end })
+            akSec:slider({ name = "Retreat distance", min = 5, max = 60, interval = 1, default = 18, suffix = " studs", callback = function(v) AK.retreat = v end })
+            akSec:toggle({ name = "Only vs melee weapon", default = true, callback = function(v) AK.onlyMelee = v end })
+
+            -- === Auto Heal ===
+            local AH = { on = false, below = 45, stopAt = 90, hide = false, back = true, busy = false, cool = 0, acc = 0 }
+            local function ahName(it)
+                if it == nil then return nil end
+                for _, g in ipairs({ function() return it.Name end, function() return it.DisplayName end, function() return it.Info and it.Info.Name end, function() return it.Data and it.Data.Name end }) do
+                    local ok, n = pcall(g); if ok and type(n) == 'string' and n ~= '' then return n end
+                end
+                return nil
+            end
+            local function ahFighter() return require(localplayer.PlayerScripts.Controllers.FighterController).LocalFighter end
+            local function ahMedkit(f)
+                if type(f) ~= 'table' or type(f.Items) ~= 'table' then return nil end
+                for s = 1, 4 do local n = ahName(f.Items[s]); if n and n:lower() == 'medkit' then return s end end
+                return nil
+            end
+            local function ahSlot(f)
+                if type(f.Items) ~= 'table' or f.EquippedItem == nil then return nil end
+                for s = 1, 4 do if f.Items[s] == f.EquippedItem then return s end end
+                return nil
+            end
+            local function ahHP()
+                local h = localplayer.Character and localplayer.Character:FindFirstChildOfClass('Humanoid')
+                if h and h.MaxHealth > 0 and h.Health > 0 then return h.Health / h.MaxHealth * 100 end
+                return nil
+            end
+            local function ahHeal()
+                if AH.busy then return end
+                AH.busy = true
+                task.spawn(function()
+                    local home, root
+                    pcall(function()
+                        local f = ahFighter(); if not f then return end
+                        local s = ahMedkit(f); if not s then return end
+                        local prev = ahSlot(f)
+                        root = localplayer.Character and localplayer.Character:FindFirstChild('HumanoidRootPart')
+                        if AH.hide and root then home = root.CFrame end
+                        f:EquipItem(s)
+                        local t0 = tick()
+                        while AH.on and tick() - t0 < 5 do
+                            local pct = ahHP()
+                            if not pct or pct >= AH.stopAt then break end
+                            if home and root and root.Parent then
+                                root.CFrame = home + Vector3.new(0, 300, 0)
+                                root.AssemblyLinearVelocity = Vector3.zero
+                            end
+                            pcall(function()
+                                local v = game:GetService('VirtualInputManager')
+                                v:CaptureController(); v:ClickButton1(Vector2.new(0,0))
+                            end)
+                            task.wait(0.25)
+                        end
+                        if AH.back and prev and prev ~= s then pcall(function() f:EquipItem(prev) end) end
+                    end)
+                    if home and root and root.Parent then pcall(function() root.CFrame = home; root.AssemblyLinearVelocity = Vector3.zero end) end
+                    AH.cool = tick() + 3
+                    AH.busy = false
+                end)
+            end
+            RunSvc.Heartbeat:Connect(function(dt)
+                if not AH.on or AH.busy then return end
+                AH.acc = AH.acc + dt
+                if AH.acc < 0.3 then return end
+                AH.acc = 0
+                if tick() < AH.cool then return end
+                local pct = ahHP()
+                if pct and pct <= AH.below then pcall(ahHeal) end
+            end)
+            local ahSec = cols.evasion:section({ name = "Auto Heal" })
+            ahSec:toggle({ name = "Auto heal (Medkit)", default = false, callback = function(v) AH.on = v end })
+            ahSec:slider({ name = "Heal below %", min = 10, max = 90, interval = 1, default = 45, callback = function(v) AH.below = v end })
+            ahSec:slider({ name = "Stop at %", min = 50, max = 100, interval = 1, default = 90, callback = function(v) AH.stopAt = v end })
+            ahSec:toggle({ name = "Hide while healing", default = false, callback = function(v) AH.hide = v end })
+            ahSec:toggle({ name = "Switch back to weapon", default = true, callback = function(v) AH.back = v end })
+
+            -- === Spinbot ===
+            local SB = { on = false, mode = 'Spin', speed = 720, dir = 'Right', angle = 90, flip = false, acc = 0, ang = 0, conn = nil, hideSelf = true, camSpin = true, cang = 0, off = nil }
+            local function sbAutoRotate(v)
+                pcall(function()
+                    local h = localplayer.Character and localplayer.Character:FindFirstChildOfClass('Humanoid')
+                    if h then h.AutoRotate = v end
+                end)
+            end
+            local function sbUndo()
+                if not SB.off then return end
+                local off = SB.off; SB.off = nil
+                local r = localplayer.Character and localplayer.Character:FindFirstChild('HumanoidRootPart')
+                if r then r.CFrame = r.CFrame * off:Inverse() end
+            end
+            local function sbStop()
+                if SB.conn then SB.conn:Disconnect(); SB.conn = nil end
+                pcall(function() RunSvc:UnbindFromRenderStep('SB_CamSpin') end)
+                pcall(function() RunSvc:UnbindFromRenderStep('SB_UndoSpin') end)
+                pcall(sbUndo)
+                sbAutoRotate(true)
+            end
+            local function sbStart()
+                if SB.conn then return end
+                sbAutoRotate(false)
+                pcall(function() RunSvc:UnbindFromRenderStep('SB_UndoSpin') end)
+                RunSvc:BindToRenderStep('SB_UndoSpin', Enum.RenderPriority.Camera.Value - 1, function()
+                    if SB.hideSelf then pcall(sbUndo) else SB.off = nil end
+                end)
+                pcall(function() RunSvc:UnbindFromRenderStep('SB_CamSpin') end)
+                RunSvc:BindToRenderStep('SB_CamSpin', Enum.RenderPriority.Last.Value, function(dt)
+                    if not SB.camSpin then return end
+                    local c = workspace.CurrentCamera; if not c then return end
+                    local yaw
+                    if SB.mode == 'Spin' then
+                        local sgn = (SB.dir == 'Left') and -1 or 1
+                        if SB.dir == 'Alternate' then sgn = SB.flip and -1 or 1 end
+                        SB.cang = (SB.cang + SB.speed * dt * sgn) % 360
+                        yaw = SB.cang
+                    elseif SB.mode == 'Jitter' then yaw = SB.flip and SB.angle or -SB.angle
+                    elseif SB.mode == 'Random' then yaw = math.random(-180, 180)
+                    end
+                    if yaw then c.CFrame = c.CFrame * CFrame.Angles(0, math.rad(yaw), 0) end
+                end)
+                SB.conn = RunSvc.Heartbeat:Connect(function(dt)
+                    local ch = localplayer.Character
+                    local r = ch and ch:FindFirstChild('HumanoidRootPart')
+                    local h = ch and ch:FindFirstChildOfClass('Humanoid')
+                    if not (r and h and h.Health > 0) then return end
+                    if h.AutoRotate then h.AutoRotate = false end
+                    if SB.off then pcall(sbUndo) end
+                    local real = r.CFrame; local off
+                    if SB.mode == 'Spin' then
+                        local sgn = 1
+                        if SB.dir == 'Left' then sgn = -1
+                        elseif SB.dir == 'Alternate' then SB.acc = SB.acc + dt; if SB.acc >= 0.5 then SB.acc = 0; SB.flip = not SB.flip end; sgn = SB.flip and -1 or 1 end
+                        SB.ang = (SB.ang + SB.speed * dt * sgn) % 360
+                        off = CFrame.Angles(0, math.rad(SB.ang), 0)
+                    elseif SB.mode == 'Jitter' then off = CFrame.Angles(0, math.rad(SB.flip and SB.angle or -SB.angle), 0); SB.flip = not SB.flip
+                    elseif SB.mode == 'Random' then off = CFrame.Angles(0, math.rad(math.random(-180, 180)), 0)
+                    elseif SB.mode == 'Backwards' then
+                        local c = workspace.CurrentCamera
+                        if c then
+                            local look = c.CFrame.LookVector
+                            local tgt = CFrame.new(real.Position, real.Position - Vector3.new(look.X, 0, look.Z))
+                            off = real:Inverse() * tgt
+                        end
+                    end
+                    if off then r.CFrame = real * off; SB.off = off end
+                end)
+            end
+            local sbSec = cols.evasion:section({ name = "Spinbot" })
+            sbSec:toggle({ name = "Spinbot", default = false, callback = function(v) SB.on = v; if v then sbStart() else sbStop() end end })
+            sbSec:dropdown({ name = "Mode", items = { 'Spin', 'Jitter', 'Random', 'Backwards' }, default = 'Spin', callback = function(v) SB.mode = v end })
+            sbSec:slider({ name = "Spin speed", min = 50, max = 5000, interval = 1, default = 720, suffix = " deg/s", callback = function(v) SB.speed = v end })
+            sbSec:dropdown({ name = "Direction", items = { 'Right', 'Left', 'Alternate' }, default = 'Right', callback = function(v) SB.dir = v end })
+            sbSec:slider({ name = "Jitter angle", min = 10, max = 180, interval = 1, default = 90, suffix = " deg", callback = function(v) SB.angle = v end })
+            sbSec:toggle({ name = "Hide my own spin", default = true, callback = function(v) SB.hideSelf = v end })
+            sbSec:toggle({ name = "Spin my camera too", default = true, callback = function(v) SB.camSpin = v end })
+
+            local vs = cols.void:section({ name = "Void Teleport" })
+            tgl(vs, "Voidspam", "Fast, customizable void teleport.", function(v) config.void_spam_enabled = v; if v then M.start_void_spam() else M.stop_void_spam() end end)
+            vs:dropdown({ name = "Voidspam Type", items = { "Random","Camera","Forward","Directional" }, default = "Random", callback = function(v) config.et_mode = v end })
+            vs:dropdown({ name = "Burst Pattern", default = "Triangle", items = { 'Triangle','Circle','Square','Pentagon','Hexagon','Octagon','Star','Diamond','Cross','Spiral', 'Zigzag','Wave','Figure8','Lemniscate','Rose','Butterfly','Cardioid','Helix3D','Sine','Deltoid', 'Astroid','Nephroid','Trefoil','Rhodonea','Limacon','Folium','Cochleoid','Involute','Fermat', 'Archimedes','Parabola','Ellipse','Cycloid','Bifolium','Trifolium','Quadrifolium','Cinquefoil', 'Sexfoil','Gear','Pinwheel','Sunflower','Daisy','Galaxy','Comet','Maltese','Lightning','Fractal', 'Hyperbola','Strophoid','Cissoid','Conchoid','Viviani','Maclaurin','Trisectrix','Kappa','Lituus', 'Trochoid','Epitrochoid','Hypotrochoid','Vortex','Lemniscate3D','Spirograph','Rhodonea6','Rhodonea8', 'EpiSpiral','HypoSpiral','Kampyle','Bicorn','Pearce','Scarabaeus','Dumbbell','Teardrop','Talbot', 'Watt','Anguinea','Squircle','Superellipse','Lame','Astroid3D','Nephroid3D','Cruciform','Piriform', 'CockedHat','Tschirnhaus','Torpedo','Seashell','Knot','Torus','Pretzel','Spring','DNA','Mobius', 'Lorenz','Lissajous','Bowditch','Hypocycloid3','Hypocycloid5','Epicycloid3','Epicycloid5','Gear12', 'Gear20','Sunray','Atomic','Pulsar','Ripple','Pyramid','Prism','Cube3D','Octahedron','Tesseract', 'Vortex3D','Helix4','Corkscrew','Twister','Whirlpool','Cyclone','Tornado3D','Storm','Chaos3D','Nova' }, callback = function(v) config.et_order = v end })
+            vs:slider({ name = "Interval", min = 0, max = 10000000, interval = 1, default = 10000000, callback = function(v) config.et_speed = v end })
+            vs:slider({ name = "Burst Count", min = 1, max = 500, interval = 1, default = 500, callback = function(v) config.et_total = v end })
+            local vd = cols.void:section({ name = "Directions" })
+            vd:slider({ name = "Min Distance", min = 0, max = 50000, interval = 1, default = 0, callback = function(v) config.vs_min_dist = v * 1e25 end })
+            vd:slider({ name = "Max Distance", min = 10, max = 500000, interval = 1, default = 50000, callback = function(v) config.vs_max_dist = v end })
+            vd:slider({ name = "X+", min = 0, max = 50000, interval = 1, default = 5000, callback = function(v) config.vs_xp = v end })
+            vd:slider({ name = "X-", min = 0, max = 50000, interval = 1, default = 5000, callback = function(v) config.vs_xn = v end })
+            vd:slider({ name = "Y+", min = 0, max = 50000, interval = 1, default = 5000, callback = function(v) config.vs_yp = v end })
+            vd:slider({ name = "Y-", min = 0, max = 50000, interval = 1, default = 5000, callback = function(v) config.vs_yn = v end })
+            vd:slider({ name = "Z+", min = 0, max = 50000, interval = 1, default = 5000, callback = function(v) config.vs_zp = v end })
+            vd:slider({ name = "Z-", min = 0, max = 50000, interval = 1, default = 5000, callback = function(v) config.vs_zn = v end })
+            local vp = cols.patterns:section({ name = "More Patterns" })
+            vp:dropdown({ name = "Pattern Settings", default = "random", items = { 'random','spiral','wave','bounce','chaos','cross','helix','strobe','rhombus', 'infinity','flower','butterfly','tornado','heart','hexagon','octagon','star','crescent','vortex' }, callback = function(v) config.void_pattern = v end })
+            tgl(vp, "Axis X", "Enable X axis.", function(v) config.void_axis_x = v end)
+            tgl(vp, "Axis Y", "Enable Y axis.", function(v) config.void_axis_y = v end)
+            tgl(vp, "Axis Z", "Enable Z axis.", function(v) config.void_axis_z = v end)
+            tgl(vp, "Smooth Mode", "Lerp instead of snap.", function(v) config.void_smooth = v end)
+            vp:slider({ name = "Smoothness", min = 1, max = 100, interval = 1, default = 50, callback = function(v) config.void_smooth_alpha = v / 100 end })
+            local stop = cols.patterns:section({ name = "Emergency Stop" })
+            stop:button({ name = "Stop all Rage features", callback = function() pcall(M.__ragebot_stop); pcall(M.stop_evasion); pcall(M.stop_anti_aim); pcall(M.stop_void_spam) end })
+
+            -- ============================================
+            -- VOID MOVEMENT (ported from first script)
+            -- ============================================
+            local VM = {
+                running = false,
+                mode = "VOID_SPAM",
+                pattern = "Random Far",
+                distance = 500,
+                interval = 0.035,
+                jitter = 14,
+                distPlusX = 200000, distMinusX = 200000,
+                distPlusY = 200000, distMinusY = 200000,
+                distPlusZ = 200000, distMinusZ = 200000,
+                conn = nil,
+                originalCFrame = nil,
+                hideLastCFrame = nil,
+                lastTeleport = 0,
+                lastVelocityClear = 0,
+                voidX = math.random(-1e8, 1e8),
+                voidZ = math.random(-1e8, 1e8),
+                voidYOffset = 0,
+                voidYDir = 1,
+                voidDirX = math.random() * 2 - 1,
+                voidDirZ = math.random() * 2 - 1,
+                voidElapsed = 0,
+                voidYBase = 1e10 + math.random(-5e9, 5e9),
+                voidDriftSpeed = 9e6,
+                voidYDriftSpeed = 4e6,
+                voidYDriftRange = 2e9,
+                voidChaos = 0.98,
+            }
+
+            local SAFE_FLOOR = 2
+            local SAFE_MAX_RISE = 800
+
+            local function vmGetHrp()
+                local char = localplayer.Character
+                if not char then return nil, nil end
+                return char:FindFirstChild("HumanoidRootPart"), char
+            end
+
+            local function vmResetPattern()
+                VM.voidX = math.random(-1e8, 1e8)
+                VM.voidZ = math.random(-1e8, 1e8)
+                VM.voidYOffset = 0
+                VM.voidYDir = 1
+                VM.voidDirX = math.random() * 2 - 1
+                VM.voidDirZ = math.random() * 2 - 1
+                VM.voidElapsed = 0
+                VM.voidYBase = 1e10 + math.random(-5e9, 5e9)
+            end
+
+            local function vmSafeTeleport(pos)
+                local hrp, char = vmGetHrp()
+                if not hrp then return end
+                local x, y, z = pos.X, math.clamp(pos.Y, SAFE_FLOOR, hrp.Position.Y + SAFE_MAX_RISE), pos.Z
+                local params = RaycastParams.new()
+                params.FilterType = Enum.RaycastFilterType.Exclude
+                params.FilterDescendantsInstances = char and { char } or {}
+                local hit = workspace:Raycast(Vector3.new(x, y + 500, z), Vector3.new(0, -1000, 0), params)
+                if hit then y = math.max(hit.Position.Y + 3, SAFE_FLOOR) end
+                hrp.AssemblyLinearVelocity = Vector3.zero
+                hrp.AssemblyAngularVelocity = Vector3.zero
+                hrp.CFrame = CFrame.new(x, y, z)
+            end
+
+            local function vmRawTeleport(pos)
+                local hrp = vmGetHrp()
+                if not hrp then return end
+                if tick() - VM.lastVelocityClear > 0.2 then
+                    VM.lastVelocityClear = tick()
+                    hrp.AssemblyLinearVelocity = Vector3.zero
+                    hrp.AssemblyAngularVelocity = Vector3.zero
+                end
+                hrp.CFrame = CFrame.new(pos)
+            end
+
+            local function vmHidePos()
+                local hrp = vmGetHrp()
+                if not hrp then return nil end
+                return Vector3.new(hrp.Position.X + 2e15, 999999, hrp.Position.Z + 2e15)
+            end
+
+            local function vmDirLimitOffset()
+                local raw = Vector3.new(
+                    math.random(-VM.distMinusX, VM.distPlusX),
+                    math.random(-VM.distMinusY, VM.distPlusY),
+                    math.random(-VM.distMinusZ, VM.distPlusZ)
+                )
+                if raw.Magnitude <= 0 then return Vector3.zero end
+                return raw.Unit * math.min(raw.Magnitude, VM.distance)
+            end
+
+            local function computeVoidDriftDir(t)
+                local nx, nz, amplitude, frequency = 0, 0, 1, 0.0001
+                for _ = 1, 4 do
+                    nx = nx + math.noise(t * frequency, 0) * amplitude
+                    nz = nz + math.noise(0, t * frequency) * amplitude
+                    frequency = frequency * 2.37
+                    amplitude = amplitude * 0.5
+                end
+                nx = nx + math.sin(t * 0.00213) * math.cos(t * 0.00344) * 0.2
+                nz = nz + math.cos(t * 0.00131) * math.sin(t * 0.00579) * 0.2
+                local len = math.sqrt(nx * nx + nz * nz)
+                if len < 0.001 then return math.cos(t * 0.1), math.sin(t * 0.1) end
+                return nx / len, nz / len
+            end
+
+            local function vmFarPosition(dt)
+                VM.voidElapsed = VM.voidElapsed + dt
+                local pat = VM.pattern
+                if pat == "Still Point" then
+                    return Vector3.new(VM.voidX, VM.voidYBase + VM.voidYOffset, VM.voidZ)
+                elseif pat == "Slow Drift" then
+                    local dx, dz = computeVoidDriftDir(VM.voidElapsed)
+                    VM.voidDirX = VM.voidDirX + (dx - VM.voidDirX) * VM.voidChaos * dt * 10
+                    VM.voidDirZ = VM.voidDirZ + (dz - VM.voidDirZ) * VM.voidChaos * dt * 10
+                    VM.voidX = VM.voidX + VM.voidDirX * VM.voidDriftSpeed * dt
+                    VM.voidZ = VM.voidZ + VM.voidDirZ * VM.voidDriftSpeed * dt
+                    VM.voidYOffset = VM.voidYOffset + VM.voidYDir * VM.voidYDriftSpeed * dt
+                    if math.abs(VM.voidYOffset) >= VM.voidYDriftRange then VM.voidYDir = -VM.voidYDir end
+                    return Vector3.new(VM.voidX, VM.voidYBase + VM.voidYOffset, VM.voidZ)
+                elseif pat == "Circle" then
+                    local r = math.max(VM.distance * 1000, 1e9) * (1 + math.sin(VM.voidElapsed))
+                    return Vector3.new(VM.voidX + math.cos(VM.voidElapsed * 3) * r, VM.voidYBase + VM.voidYOffset, VM.voidZ + math.sin(VM.voidElapsed * 3) * r)
+                elseif pat == "Figure Eight" then
+                    local r = math.max(VM.distance * 2000, 2e9)
+                    return Vector3.new(VM.voidX + math.sin(VM.voidElapsed * 2) * r, VM.voidYBase + math.sin(VM.voidElapsed * 4) * r * 0.1, VM.voidZ + math.sin(VM.voidElapsed * 3) * r)
+                elseif pat == "Wide Sweep" then
+                    local t, r = VM.voidElapsed * 15, math.max(VM.distance * 10000, 1e10)
+                    return Vector3.new(VM.voidX + math.sin(t) * r, VM.voidYBase + math.cos(t * 1.5) * r * 0.1, VM.voidZ + math.cos(t) * r)
+                elseif pat == "Fast Bounce" then
+                    local t, r = VM.voidElapsed * 50, math.max(VM.distance * 10000, 1e10) * math.sin(VM.voidElapsed * 50)
+                    return Vector3.new(VM.voidX + r, VM.voidYBase + math.cos(t) * 1e10, VM.voidZ + r)
+                elseif pat == "Blink" then
+                    if tick() % 0.1 < 0.05 then return Vector3.new(VM.voidX * 2, VM.voidYBase + 1e11, VM.voidZ * 2) end
+                    return Vector3.new(VM.voidX, VM.voidYBase, VM.voidZ)
+                elseif pat == "Grid Hop" then
+                    local cell = math.max(VM.distance * 5000, 5e8)
+                    local step = math.floor(VM.voidElapsed * 8)
+                    local gx = (step % 5) - 2
+                    local gz = (math.floor(step / 5) % 5) - 2
+                    local gy = (step % 2 == 0) and 0 or cell * 0.18
+                    return Vector3.new(VM.voidX + gx * cell, VM.voidYBase + gy, VM.voidZ + gz * cell)
+                elseif pat == "Height Wave" then
+                    local t, r = VM.voidElapsed * 6, math.max(VM.distance * 3000, 2e9)
+                    return Vector3.new(VM.voidX + math.cos(t * 0.4) * r, VM.voidYBase + math.sin(t) * r * 0.35, VM.voidZ + math.sin(t * 0.4) * r)
+                elseif pat == "Square Loop" then
+                    local r = math.max(VM.distance * 4000, 3e9)
+                    local t = (VM.voidElapsed * 1.8) % 4
+                    local side = math.floor(t)
+                    local a = t - side
+                    local x, z
+                    if side == 0 then x = -r + a * 2 * r; z = -r
+                    elseif side == 1 then x = r; z = -r + a * 2 * r
+                    elseif side == 2 then x = r - a * 2 * r; z = r
+                    else x = -r; z = r - a * 2 * r end
+                    return Vector3.new(VM.voidX + x, VM.voidYBase + math.sin(VM.voidElapsed * 8) * r * 0.05, VM.voidZ + z)
+                elseif pat == "Cross Sweep" then
+                    local r = math.max(VM.distance * 6000, 4e9)
+                    local t = VM.voidElapsed * 4
+                    local axis = math.floor(t) % 4
+                    local a = math.sin(t * math.pi) * r
+                    if axis == 0 then return Vector3.new(VM.voidX + a, VM.voidYBase, VM.voidZ)
+                    elseif axis == 1 then return Vector3.new(VM.voidX, VM.voidYBase + math.sin(t) * r * 0.08, VM.voidZ + a)
+                    elseif axis == 2 then return Vector3.new(VM.voidX - a, VM.voidYBase, VM.voidZ) end
+                    return Vector3.new(VM.voidX, VM.voidYBase - math.sin(t) * r * 0.08, VM.voidZ - a)
+                elseif pat == "Stacked Steps" then
+                    local cell = math.max(VM.distance * 3500, 2e9)
+                    local step = math.floor(VM.voidElapsed * 7)
+                    local x = ((step % 7) - 3) * cell
+                    local z = ((math.floor(step / 7) % 7) - 3) * cell
+                    local y = (step % 5) * cell * 0.12
+                    return Vector3.new(VM.voidX + x, VM.voidYBase + y, VM.voidZ + z)
+                elseif pat == "Noise Cloud" then
+                    local r = math.max(VM.distance * 5000, 4e9)
+                    local t = VM.voidElapsed * 1.5
+                    return Vector3.new(VM.voidX + math.noise(t, 0, 0) * r, VM.voidYBase + math.noise(0, t, 0) * r * 0.25, VM.voidZ + math.noise(0, 0, t) * r)
+                end
+                local r = math.max(VM.distance * 10000, 1e11)
+                local sign = math.random() > 0.5 and 1 or -1
+                local jitter = Vector3.new(math.random(-1e9, 1e9), math.random(-1e8, 1e8), math.random(-1e9, 1e9))
+                return Vector3.new(VM.voidX + r * sign, VM.voidYBase + jitter.Y, VM.voidZ + r * sign) + jitter
+            end
+
+            local function vmStep(dt, phase)
+                local hrp = vmGetHrp()
+                if not hrp then return false end
+                dt = dt or VM.interval
+                phase = phase or (VM.voidElapsed + dt * 28)
+                if VM.mode == "VOID_HIDE" then
+                    if not VM.hideLastCFrame then VM.hideLastCFrame = hrp.CFrame end
+                    local hp = vmHidePos()
+                    if hp then vmRawTeleport(hp) end
+                    return true
+                end
+                if VM.mode == "VOID_SPAM" then
+                    vmRawTeleport(vmFarPosition(dt))
+                    return true
+                end
+                local offset
+                if VM.mode == "FORWARD" then
+                    offset = hrp.CFrame.LookVector * VM.distance
+                elseif VM.mode == "CAMERA" and workspace.CurrentCamera then
+                    offset = workspace.CurrentCamera.CFrame.LookVector * VM.distance
+                elseif VM.mode == "DIRECTIONAL" then
+                    offset = vmDirLimitOffset()
+                else
+                    local r1 = VM.distance * (0.60 + 0.40 * math.sin(phase * 2.3))
+                    local r2 = VM.distance * (0.25 + 0.15 * math.sin(phase * 5.7))
+                    local r3 = VM.distance * (0.10 + 0.10 * math.sin(phase * 11.3))
+                    local oX = math.cos(phase * 7.1) * r1 + math.cos(phase * 13.4) * r2 + math.cos(phase * 21.9) * r3
+                    local oZ = math.sin(phase * 7.1) * r1 + math.sin(phase * 13.4) * r2 + math.sin(phase * 21.9) * r3
+                    local oY = math.sin(phase * 9) * r1 * 0.4 + math.sin(phase * 17) * r2 * 0.3
+                    local jX = math.noise(phase * 6, 0, 0) * VM.jitter * 3 + (math.random() - 0.5) * VM.jitter * 2.5
+                    local jY = math.noise(0, phase * 6, 0) * VM.jitter * 1.5 + (math.random() - 0.5) * VM.jitter * 1.2
+                    local jZ = math.noise(0, 0, phase * 6) * VM.jitter * 3 + (math.random() - 0.5) * VM.jitter * 2.5
+                    offset = Vector3.new(oX + jX, oY + jY, oZ + jZ)
+                end
+                vmSafeTeleport(hrp.Position + offset)
+                return true
+            end
+
+            local function vmStart()
+                if VM.conn then VM.conn:Disconnect() end
+                local hrp = vmGetHrp()
+                if hrp then VM.originalCFrame = hrp.CFrame end
+                local phase = 0
+                VM.conn = RunSvc.Heartbeat:Connect(function(dt)
+                    if not VM.running then return end
+                    if tick() - VM.lastTeleport < VM.interval then return end
+                    VM.lastTeleport = tick()
+                    phase = phase + dt * 28
+                    vmStep(dt, phase)
+                end)
+            end
+
+            local function vmStop()
+                VM.running = false
+                if VM.conn then VM.conn:Disconnect(); VM.conn = nil end
+                local hrp = vmGetHrp()
+                if hrp then
+                    if VM.mode == "VOID_HIDE" and VM.hideLastCFrame then
+                        hrp.AssemblyLinearVelocity = Vector3.zero
+                        hrp.AssemblyAngularVelocity = Vector3.zero
+                        hrp.CFrame = VM.hideLastCFrame
+                    elseif VM.originalCFrame then
+                        hrp.AssemblyLinearVelocity = Vector3.zero
+                        hrp.AssemblyAngularVelocity = Vector3.zero
+                        hrp.CFrame = VM.originalCFrame
+                    end
+                end
+                VM.originalCFrame = nil
+                VM.hideLastCFrame = nil
+            end
+
+            local function applyVoidProfile(value)
+                if value == "Steady Scan" then
+                    VM.mode = "VOID_SPAM"; VM.pattern = "Slow Drift"
+                    VM.distance = 2500000; VM.interval = 0.08; VM.jitter = 4
+                    VM.voidDriftSpeed = 3500000; VM.voidYDriftSpeed = 1600000
+                    VM.voidYDriftRange = 900000000; VM.voidChaos = 0.55
+                elseif value == "Fast Sweep" then
+                    VM.mode = "VOID_SPAM"; VM.pattern = "Cross Sweep"
+                    VM.distance = 12000000; VM.interval = 0.025; VM.jitter = 18
+                    VM.voidDriftSpeed = 12000000; VM.voidYDriftSpeed = 6000000
+                    VM.voidYDriftRange = 3500000000; VM.voidChaos = 0.9
+                elseif value == "Deep Void" then
+                    VM.mode = "VOID_SPAM"; VM.pattern = "Noise Cloud"
+                    VM.distance = 50000000; VM.interval = 0.04; VM.jitter = 8
+                    VM.voidDriftSpeed = 18000000; VM.voidYDriftSpeed = 9000000
+                    VM.voidYDriftRange = 7000000000; VM.voidChaos = 0.75
+                elseif value == "Stress Test" then
+                    VM.mode = "VOID_SPAM"; VM.pattern = "Fast Bounce"
+                    VM.distance = 50000000; VM.interval = 0.01; VM.jitter = 45
+                    VM.voidDriftSpeed = 30000000; VM.voidYDriftSpeed = 16000000
+                    VM.voidYDriftRange = 12000000000; VM.voidChaos = 0.98
+                end
+                vmResetPattern()
+            end
+
+            local vmSec = cols.ragebot:section({ name = "Void Movement" })
+            vmSec:toggle({ name = "Enable Void Movement", default = false, callback = function(v)
+                VM.running = v
+                if v then vmStart() else vmStop() end
+            end })
+            vmSec:keybind({ name = "Void Movement Toggle", callback = function(active)
+                VM.running = active
+                if active then vmStart() else vmStop() end
+            end })
+            vmSec:dropdown({ name = "Movement Mode", default = "VOID_SPAM",
+                items = { "VOID_SPAM", "VOID_HIDE", "RANDOM", "CAMERA", "FORWARD", "DIRECTIONAL" },
+                callback = function(v) VM.mode = v end })
+            vmSec:dropdown({ name = "Void Pattern", default = "Random Far",
+                items = { "Random Far", "Still Point", "Slow Drift", "Circle", "Figure Eight", "Wide Sweep", "Fast Bounce", "Blink", "Grid Hop", "Height Wave", "Square Loop", "Cross Sweep", "Stacked Steps", "Noise Cloud" },
+                callback = function(v) VM.pattern = v end })
+            vmSec:button({ name = "Reset Pattern", callback = function() vmResetPattern() end })
+            vmSec:slider({ name = "Distance", min = 50, max = 50000000, interval = 1, default = 500, suffix = " studs", callback = function(v) VM.distance = v end })
+            vmSec:slider({ name = "Step Interval", min = 0.01, max = 2, interval = 0.01, default = 0.035, suffix = "s", callback = function(v) VM.interval = v end })
+            vmSec:slider({ name = "Jitter Strength", min = 0, max = 60, interval = 1, default = 14, callback = function(v) VM.jitter = v end })
+            vmSec:dropdown({ name = "Movement Preset", default = "Manual",
+                items = { "Manual", "Steady Scan", "Fast Sweep", "Deep Void", "Stress Test" },
+                callback = function(v) if v ~= "Manual" then applyVoidProfile(v) end end })
+
+            local vdmSec = cols.ragebot:section({ name = "Void Directional Limits" })
+            vdmSec:slider({ name = "+X Limit", min = 50, max = 50000000, interval = 1, default = 200000, callback = function(v) VM.distPlusX = v end })
+            vdmSec:slider({ name = "-X Limit", min = 50, max = 50000000, interval = 1, default = 200000, callback = function(v) VM.distMinusX = v end })
+            vdmSec:slider({ name = "+Y Limit", min = 50, max = 50000000, interval = 1, default = 200000, callback = function(v) VM.distPlusY = v end })
+            vdmSec:slider({ name = "-Y Limit", min = 50, max = 50000000, interval = 1, default = 200000, callback = function(v) VM.distMinusY = v end })
+            vdmSec:slider({ name = "+Z Limit", min = 50, max = 50000000, interval = 1, default = 200000, callback = function(v) VM.distPlusZ = v end })
+            vdmSec:slider({ name = "-Z Limit", min = 50, max = 50000000, interval = 1, default = 200000, callback = function(v) VM.distMinusZ = v end })
+            vdmSec:button({ name = "Mirror Limits", callback = function()
+                local x = math.max(VM.distPlusX, VM.distMinusX)
+                local y = math.max(VM.distPlusY, VM.distMinusY)
+                local z = math.max(VM.distPlusZ, VM.distMinusZ)
+                VM.distPlusX = x; VM.distMinusX = x
+                VM.distPlusY = y; VM.distMinusY = y
+                VM.distPlusZ = z; VM.distMinusZ = z
+            end })
+            vdmSec:button({ name = "Reset Limits", callback = function()
+                VM.distPlusX = 200000; VM.distMinusX = 200000
+                VM.distPlusY = 200000; VM.distMinusY = 200000
+                VM.distPlusZ = 200000; VM.distMinusZ = 200000
+            end })
+        end)
+    end, function(e) warn('[Sniflva Ragebot 2] ' .. tostring(e)) end)
+end
+
+-- ============================================================
+-- 4. VISUALS TAB
+-- ============================================================
+do
+    local colV = makeColumn(tabs[7].content)
+    local espSec = colV:section({ name = "Player ESP" })
+    espSec:toggle({ name = "Enable ESP", default = false, callback = function(v) esp.enabled = v end })
+    espSec:toggle({ name = "Team check", default = true, callback = function(v) esp.teamCheck = v end })
+    espSec:slider({ name = "Max distance", min = 100, max = 5000, interval = 50, default = 1000, suffix = " studs", callback = function(v) esp.maxDist = v end })
+    espSec:toggle({ name = "Box", default = true, callback = function(v) esp.box = v end })
+    espSec:toggle({ name = "Name", default = true, callback = function(v) esp.name = v end })
+    espSec:toggle({ name = "Health", default = true, callback = function(v) esp.health = v end })
+    espSec:toggle({ name = "Distance", default = true, callback = function(v) esp.dist = v end })
+    espSec:toggle({ name = "Tracers", default = true, callback = function(v) esp.tracer = v end })
+    espSec:dropdown({ name = "Box color", items = PRESET_KEYS, default = "Red", callback = function(v) esp.boxColor = PRESET_COLORS[v] or esp.boxColor end })
+    espSec:dropdown({ name = "Name color", items = PRESET_KEYS, default = "White", callback = function(v) esp.nameColor = PRESET_COLORS[v] or esp.nameColor end })
+    espSec:dropdown({ name = "Health color", items = PRESET_KEYS, default = "Green", callback = function(v) esp.healthColor = PRESET_COLORS[v] or esp.healthColor end })
+    espSec:dropdown({ name = "Tracer color", items = PRESET_KEYS, default = "Accent", callback = function(v) esp.tracerColor = PRESET_COLORS[v] or esp.tracerColor end })
+
+    local chamsSec = colV:section({ name = "Chams" })
+    chamsSec:toggle({ name = "Enable Chams", default = false, callback = function(v) chams.enabled = v end })
+    chamsSec:toggle({ name = "Team check", default = true, callback = function(v) chams.teamCheck = v end })
+    chamsSec:slider({ name = "Fill transparency", min = 0, max = 100, interval = 1, default = 50, callback = function(v) chams.fillTransparency = v / 100 end })
+    chamsSec:dropdown({ name = "Fill color", items = PRESET_KEYS, default = "Red", callback = function(v) chams.fillColor = PRESET_COLORS[v] or chams.fillColor end })
+    chamsSec:dropdown({ name = "Outline color", items = PRESET_KEYS, default = "White", callback = function(v) chams.outlineColor = PRESET_COLORS[v] or chams.outlineColor end })
+
+    local Lighting = game:GetService("Lighting")
+    local orig = { Ambient = Lighting.Ambient, OutdoorAmbient = Lighting.OutdoorAmbient, Brightness = Lighting.Brightness, FogEnd = Lighting.FogEnd }
+    local worldSec = colV:section({ name = "World" })
+    worldSec:toggle({ name = "Fullbright", default = false, callback = function(v) if v then Lighting.Ambient = Color3.new(1, 1, 1); Lighting.OutdoorAmbient = Color3.new(1, 1, 1); Lighting.Brightness = 2 else Lighting.Ambient = orig.Ambient; Lighting.OutdoorAmbient = orig.OutdoorAmbient; Lighting.Brightness = orig.Brightness end end })
+    worldSec:toggle({ name = "No fog", default = false, callback = function(v) Lighting.FogEnd = v and 1e6 or orig.FogEnd end })
+    worldSec:slider({ name = "Camera FOV", min = 40, max = 130, interval = 1, default = 70, callback = function(v) local c = workspace.CurrentCamera; if c then c.FieldOfView = v end end })
+
+    local miscSec = colV:section({ name = "Cleanup" })
+    miscSec:button({ name = "Clear ESP / Chams", callback = function() esp.enabled = false; for _, f in pairs(espFrames) do pcall(function() f.frame:Destroy() end); pcall(function() f.tracer:Destroy() end) end; espFrames = {}; chams.enabled = false; for _, h in pairs(chamsHighlights) do pcall(function() h:Destroy() end) end; chamsHighlights = {} end })
+end
+
+-- ============================================================
+-- 5. ORBIT TAB (from Sniflva)
+-- ============================================================
+do
+    local colO = makeColumn(tabs[9].content)
+    xpcall(function()
+        local lp = LP
+        local cfg = { speed = 500, distance = 5, height = -4, maxDistance = 800, useDesync = false }
+        local S = { on = false, conn = nil, charConn = nil, diedConn = nil, lastAngle = 0, lastPos = nil,
+            targetReady = false, lobbyLeft = 0, cooldown = 0, client = nil, renderBound = false }
+        local RENDER_NAME = "SniflvaOrbitSimpleDesync"
+        local function getRoot(char) return char and (char:FindFirstChild("HumanoidRootPart") or char.PrimaryPart) end
+        local function alive(char) local h = char and char:FindFirstChildOfClass("Humanoid"); return h ~= nil and h.Health > 0 end
+        local function inLobby()
+            local ok, res = pcall(function()
+                local gui = lp:FindFirstChild("PlayerGui"); if not gui then return false end
+                local main = gui:FindFirstChild("MainGui"); if not main then return false end
+                local frame = main:FindFirstChild("MainFrame"); if not frame then return false end
+                local lobby = frame:FindFirstChild("Lobby"); if not lobby then return false end
+                local currency = lobby:FindFirstChild("Currency"); if not currency then return false end
+                return currency.Visible
+            end)
+            return ok and res == true
+        end
+        local function resetState() S.client = nil; S.targetReady = false; S.lobbyLeft = 0 end
+        local function stopRender() if S.renderBound then pcall(function() RunSvc:UnbindFromRenderStep(RENDER_NAME) end); S.renderBound = false end end
+        local function startRender()
+            stopRender(); S.renderBound = true
+            RunSvc:BindToRenderStep(RENDER_NAME, Enum.RenderPriority.First.Value, function()
+                if not (cfg.useDesync and S.on) then return end
+                if S.cooldown > tick() then return end
+                local char = lp.Character; if not alive(char) then return end
+                local root = getRoot(char); if root and S.client then root.CFrame = S.client end
+            end)
+        end
+        local function nearest()
+            local myRoot = getRoot(lp.Character); if not myRoot then return nil end
+            local best, bestD = nil, cfg.maxDistance
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= lp then
+                    local c = plr.Character; local r = getRoot(c)
+                    if r and alive(c) then local d = (r.Position - myRoot.Position).Magnitude; if d < bestD then bestD = d; best = plr end end
+                end
+            end
+            return best
+        end
+        local function hookChar(char)
+            S.lastPos = nil
+            if S.diedConn then pcall(function() S.diedConn:Disconnect() end); S.diedConn = nil end
+            local hum = char and char:WaitForChild("Humanoid", 5)
+            if not hum or not S.on then return end
+            if cfg.useDesync then startRender() end
+            S.diedConn = hum.Died:Connect(function() resetState() end)
+        end
+        local function step(dt)
+            local char = lp.Character; local root = getRoot(char); if not root then return end
+            if not S.lastPos then S.lastPos = root.Position
+            else
+                local d = (root.Position - S.lastPos).Magnitude; S.lastPos = root.Position
+                if d > 80 then S.cooldown = tick() + 1.2; resetState(); return end
+            end
+            if S.cooldown > tick() then return end
+            if inLobby() then resetState(); return end
+            if not S.targetReady then
+                if S.lobbyLeft == 0 then S.lobbyLeft = tick(); return end
+                if tick() - S.lobbyLeft >= 1 then S.targetReady = true else return end
+            end
+            if not alive(char) then return end
+            if cfg.useDesync then S.client = root.CFrame end
+            local target = nearest()
+            if target and target.Character and alive(target.Character) then
+                local tr = getRoot(target.Character)
+                if tr then
+                    S.lastAngle = S.lastAngle + dt * cfg.speed * math.rad(360)
+                    local radius = cfg.distance + math.random(-3, 3); local height = cfg.height + math.random(-6, 6)
+                    local angle = S.lastAngle + math.rad(math.random(-20, 20)); local center = tr.Position
+                    root.CFrame = CFrame.new(center + Vector3.new(math.cos(angle) * radius, height, math.sin(angle) * radius), center)
+                end
+            end
+        end
+        local function setOrbit(on)
+            if S.conn then pcall(function() S.conn:Disconnect() end); S.conn = nil end
+            if S.charConn then pcall(function() S.charConn:Disconnect() end); S.charConn = nil end
+            if S.diedConn then pcall(function() S.diedConn:Disconnect() end); S.diedConn = nil end
+            stopRender(); resetState()
+            S.on = on and true or false
+            if not S.on then return end
+            S.lastPos = nil
+            S.conn = RunSvc.Heartbeat:Connect(function(dt) pcall(step, dt) end)
+            S.charConn = lp.CharacterAdded:Connect(function(c) task.spawn(hookChar, c) end)
+            if cfg.useDesync then startRender() end
+            if lp.Character then task.spawn(hookChar, lp.Character) end
+        end
+        local sec1 = colO:section({ name = "Orbit (Simple)" })
+        sec1:toggle({ name = "Enabled", default = false, callback = function(v) setOrbit(v) end })
+        sec1:toggle({ name = "Desync", default = false, callback = function(v) cfg.useDesync = v; if not v then S.client = nil; stopRender() elseif S.on then startRender() end end })
+        sec1:slider({ name = "Speed", min = 100, max = 1000, interval = 1, default = 500, callback = function(v) cfg.speed = v end })
+        sec1:slider({ name = "Distance", min = 3, max = 15, interval = 0.1, default = 5, callback = function(v) cfg.distance = v end })
+        sec1:slider({ name = "Height", min = -10, max = 20, interval = 0.1, default = -4, callback = function(v) cfg.height = v end })
+        sec1:slider({ name = "Max Distance", min = 100, max = 1500, interval = 1, default = 800, suffix = " studs", callback = function(v) cfg.maxDistance = v end })
+
+        local orbitCfg = { enabled=false, speed=90, radius=8, height=0, smoothing=0.30, mode='Circle', predict=false, predStrength=0.20, faceTarget=true, autoLockDist=50 }
+        local orbitAngle, orbitElapsed, orbitCurrentRadius = 0, 0, 8
+        local orbitConn = nil
+        local function getFeatureRoot() local ch = lp and lp.Character; return ch and ch:FindFirstChild('HumanoidRootPart'), ch end
+        local function closestOrbitPlayer(maxDist)
+            local root = getFeatureRoot(); if not root then return nil end
+            local best, bestDist = nil, maxDist or math.huge
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= lp and plr.Character then
+                    local hrp = plr.Character:FindFirstChild('HumanoidRootPart'); local hum = plr.Character:FindFirstChildOfClass('Humanoid')
+                    if hrp and hum and hum.Health > 0 then local d = (root.Position - hrp.Position).Magnitude; if d < bestDist then best, bestDist = plr, d end end
+                end
+            end
+            return best
+        end
+        local function startOrbitModes()
+            if orbitConn then orbitConn:Disconnect(); orbitConn = nil end
+            orbitAngle, orbitElapsed = 0, 0; orbitCurrentRadius = orbitCfg.radius
+            orbitConn = RunSvc.Heartbeat:Connect(function(dt)
+                if not orbitCfg.enabled then if orbitConn then orbitConn:Disconnect(); orbitConn = nil end return end
+                local root = getFeatureRoot(); if not root then return end
+                local target = closestOrbitPlayer(orbitCfg.autoLockDist); if not target or not target.Character then return end
+                local hrp = target.Character:FindFirstChild('HumanoidRootPart'); if not hrp then return end
+                local targetPos = hrp.Position
+                if orbitCfg.predict then targetPos = targetPos + hrp.AssemblyLinearVelocity * orbitCfg.predStrength end
+                orbitAngle = orbitAngle + math.rad(orbitCfg.speed) * dt; orbitElapsed = orbitElapsed + dt
+                local r, h = orbitCfg.radius, orbitCfg.height; local x, y, z = 0, h, 0
+                if orbitCfg.mode == 'Circle' then x, z = math.cos(orbitAngle)*r, math.sin(orbitAngle)*r
+                elseif orbitCfg.mode == 'Figure 8' then x, z = math.sin(orbitAngle)*r, math.sin(orbitAngle)*math.cos(orbitAngle)*r*0.7
+                elseif orbitCfg.mode == 'Spiral In' then orbitCurrentRadius = math.max(1, orbitCurrentRadius - dt*2); x, z = math.cos(orbitAngle)*orbitCurrentRadius, math.sin(orbitAngle)*orbitCurrentRadius
+                elseif orbitCfg.mode == 'Spiral Out' then orbitCurrentRadius = math.min(r*2, orbitCurrentRadius + dt*2); x, z = math.cos(orbitAngle)*orbitCurrentRadius, math.sin(orbitAngle)*orbitCurrentRadius
+                elseif orbitCfg.mode == 'Bounce' then x, z = math.cos(orbitAngle)*r, math.sin(orbitAngle)*r; y = h + math.sin(orbitElapsed*3)*5 end
+                local dst = targetPos + Vector3.new(x,y,z); local smooth = root.Position:Lerp(dst, math.clamp(orbitCfg.smoothing, 0.01, 1))
+                if orbitCfg.faceTarget then root.CFrame = CFrame.new(smooth, Vector3.new(targetPos.X, smooth.Y, targetPos.Z)) else root.CFrame = CFrame.new(smooth) end
+            end)
+        end
+        local function stopOrbitModes() if orbitConn then orbitConn:Disconnect(); orbitConn = nil end; orbitCfg.enabled = false end
+        local sec2 = colO:section({ name = "Orbit (Modes)" })
+        sec2:toggle({ name = "Enable Orbit", default = false, callback = function(v) orbitCfg.enabled = v; if v then startOrbitModes() else stopOrbitModes() end end })
+        sec2:dropdown({ name = "Orbit Mode", items = { 'Circle', 'Figure 8', 'Spiral In', 'Spiral Out', 'Bounce' }, default = 'Circle', callback = function(v) orbitCfg.mode = v; orbitCurrentRadius = orbitCfg.radius end })
+        sec2:slider({ name = "Speed (deg/s)", min = 5, max = 720, interval = 1, default = 90, callback = function(v) orbitCfg.speed = v end })
+        sec2:slider({ name = "Radius", min = 1, max = 200, interval = 1, default = 8, callback = function(v) orbitCfg.radius = v; orbitCurrentRadius = v end })
+        sec2:slider({ name = "Height Offset", min = -200, max = 200, interval = 1, default = 0, callback = function(v) orbitCfg.height = v end })
+        sec2:slider({ name = "Smoothing %", min = 1, max = 100, interval = 1, default = 30, callback = function(v) orbitCfg.smoothing = v / 100 end })
+        local sec3 = colO:section({ name = "Orbit (Modes) Advanced" })
+        sec3:toggle({ name = "Face Target", default = true, callback = function(v) orbitCfg.faceTarget = v end })
+        sec3:toggle({ name = "Prediction", default = false, callback = function(v) orbitCfg.predict = v end })
+        sec3:slider({ name = "Prediction Strength %", min = 0, max = 100, interval = 1, default = 20, callback = function(v) orbitCfg.predStrength = v / 100 end })
+        sec3:slider({ name = "Max Auto-Lock Dist", min = 10, max = 500, interval = 1, default = 50, callback = function(v) orbitCfg.autoLockDist = v end })
+    end, function(e) warn('[Orbit Tab] ' .. tostring(e)) end)
+end
+
+print("[Pet Rage Suite + ULTIMATE COMBAT] Loaded. RightShift to toggle. Minimize button in top-right.")
